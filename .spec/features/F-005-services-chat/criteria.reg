@@ -1,0 +1,6 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-001	ChatService em app/services/chat.py com create_chat, get_chat, list_chats, delete_chat delegando persistencia ao ChatRepository (Protocol) injetado	T-SPEC
+AC-002	U-002	router app/api/chats.py com POST /chats, GET /chats, GET /chats/{id}, DELETE /chats/{id} registrado no create_app (app/main.py) usando ChatService	T-SPEC
+AC-003	U-002	Pydantic schemas ChatCreate (name obrigatorio, description opcional) e ChatRead (id, name, description) em app/schemas/ com retorno modelado por response_model	T-SPEC
+AC-004	U-003	dependency get_session (yield Session do SQLAlchemy) em app/db/ cria sessao por request e e injetada nos controllers repassando ao service/repository	T-SPEC
+AC-005	U-001	testes tests/api/test_chats.py com TestClient (SQLite :memory:) cobrem POST cria e retorna id, GET lista, GET/{id} retorna, DELETE remove e GET/DELETE de id inexistente retornam 404 com detail	T-SPEC

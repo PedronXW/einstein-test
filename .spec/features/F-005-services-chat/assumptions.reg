@@ -1,0 +1,6 @@
+#id	tipo	status	texto
+A-001	A	confirmada	controllers sao os routers HTTP em app/api/chats.py
+A-002	A	confirmada	CRUD completo: POST/GET/GET-by-id/DELETE
+A-003	A	confirmada	schemas Pydantic ChatCreate/ChatRead com response_model modelado
+A-004	A	confirmada	dependency get_session (sessao por request) injetada
+A-005	A	confirmada	chat nao encontrado -> HTTPException 404 com detail
