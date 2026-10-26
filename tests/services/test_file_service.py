@@ -1,0 +1,162 @@
+"""Testes TDD da feature F-007 (FileService + Storage + FileRepository).
+
+Valida AC-001..AC-003: repository com list(chat_id), storage abstraído com
+MinioStorage (boto3) e fake, service orquestrando.
+"""
+
+from datetime import UTC, datetime
+
+import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
+
+from app.db.base import Base
+from app.models.file import File
+from app.repositories import FileRepository, FileRepositorySQLAlchemy
+from app.services.file import FileNotFound, FileService
+from app.storage import InMemoryStorage, MinioStorage, Storage
+
+
+class _FakeFileRepository:
+    """FileRepository fake fiel ao Protocol (chat_id no list)."""
+
+    def __init__(self):
+        self._files = {}
+        self._next_id = 1
+
+    def create(self, chat_id, name, url, type=None, size=0):
+        file_ = File(
+            id=self._next_id, chat_id=chat_id, name=name,
+            url=url, type=type, size=size,
+        )
+        self._files[self._next_id] = file_
+        self._next_id += 1
+        return file_
+
+    def get_by_id(self, file_id):
+        file_ = self._files.get(file_id)
+        if file_ is not None and file_.deleted_at is not None:
+            return None
+        return file_
+
+    def list(self, chat_id):
+        return [
+            f for f in self._files.values()
+            if f.chat_id == chat_id and f.deleted_at is None
+        ]
+
+    def delete(self, file_id):
+        file_ = self._files.get(file_id)
+        if file_ is not None:
+            file_.deleted_at = datetime.now(UTC)
+        return None
+
+
+def test_ac001_repository_list_filters_by_chat():
+    engine = create_engine("sqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    with Session(engine) as session:
+        repo = FileRepositorySQLAlchemy(session)
+        repo.create(chat_id=1, name="a.txt", url="s3://b/a.txt")
+        repo.create(chat_id=2, name="b.txt", url="s3://b/b.txt")
+        assert [f.name for f in repo.list(chat_id=1)] == ["a.txt"]
+        assert repo.list(chat_id=2) != []
+        assert all(f.chat_id == 1 for f in repo.list(chat_id=1))
+        assert repo.list(chat_id=999) == []
+    engine.dispose()
+
+
+def test_ac002_service_create_uses_storage():
+    repo = _FakeFileRepository()
+    storage = InMemoryStorage()
+    service = FileService(repo, storage)
+
+    file_ = service.create_file(
+        chat_id=1, name="doc.pdf", content=b"%PDF",
+        content_type="application/pdf",
+    )
+    assert file_.id is not None
+    assert file_.chat_id == 1
+    assert file_.type == "application/pdf"
+    assert file_.size == 4
+    assert file_.url  # url gerada pelo storage
+
+
+def test_ac002_service_upload_stored_bytes():
+    storage = InMemoryStorage()
+    repo = _FakeFileRepository()
+    service = FileService(repo, storage)
+
+    file_ = service.create_file(chat_id=1, name="doc.pdf", content=b"hello")
+    assert b"hello" in storage._objects.values(), "bytes persistidos no storage"
+    assert file_.url.startswith("s3://einstein/chats/1/"), (
+        "url aponta para o bucket/chat"
+    )
+
+
+def test_ac002_service_sanitizes_name_in_key():
+    storage = InMemoryStorage()
+    repo = _FakeFileRepository()
+    service = FileService(repo, storage)
+
+    file_ = service.create_file(
+        chat_id=1, name="../../outro/aluno.pdf", content=b"x"
+    )
+    # a chave do objeto não contém traversal e o nome persistido é o basename
+    assert ".." not in file_.url, "sem path traversal na chave do bucket"
+    assert file_.name == "aluno.pdf", "nome persistido é o basename sanitizado"
+
+
+def test_ac002_service_delete_removes_object_from_storage():
+    storage = InMemoryStorage()
+    repo = _FakeFileRepository()
+    service = FileService(repo, storage)
+
+    created = service.create_file(chat_id=1, name="rem.txt", content=b"data")
+    object_key = created.url.split("/", 3)[3]
+    assert object_key in storage._objects, "objeto existente no storage"
+
+    service.delete_file(created.id)
+    assert object_key not in storage._objects, "delete remove objeto do storage"
+
+
+def test_ac002_service_get_list_delete():
+    repo = _FakeFileRepository()
+    service = FileService(repo, InMemoryStorage())
+    created = service.create_file(chat_id=1, name="x.txt", content=b"x")
+
+    assert service.get_file(created.id).name == "x.txt"
+    assert len(service.list_files(chat_id=1)) == 1
+    assert service.list_files(chat_id=2) == []
+
+    service.delete_file(created.id)
+    with pytest.raises(FileNotFound):
+        service.get_file(created.id)
+    assert service.list_files(chat_id=1) == []
+
+
+def test_ac002_service_get_unknown_raises():
+    service = FileService(_FakeFileRepository(), InMemoryStorage())
+    with pytest.raises(FileNotFound):
+        service.get_file(999999)
+
+
+def test_ac002_service_delete_unknown_raises():
+    service = FileService(_FakeFileRepository(), InMemoryStorage())
+    with pytest.raises(FileNotFound):
+        service.delete_file(999999)
+
+
+def test_ac003_storage_is_protocol():
+    assert hasattr(Storage, "upload")
+
+
+def test_ac003_minio_storage_configured():
+    assert MinioStorage.bucket == "einstein", "bucket default do compose F-001"
+
+
+def test_ac003_inmemory_storage_roundtrip():
+    storage = InMemoryStorage()
+    url = storage.upload("einstein", "path/x.txt", b"data")
+    assert url.endswith("path/x.txt")
+    assert storage._objects["path/x.txt"] == b"data"

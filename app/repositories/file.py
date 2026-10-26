@@ -19,7 +19,7 @@ class FileRepository(Protocol):
         size: int = 0,
     ) -> File: ...
     def get_by_id(self, file_id: int) -> File | None: ...
-    def list(self) -> list[File]: ...
+    def list(self, chat_id: int) -> list[File]: ...
     def delete(self, file_id: int) -> None: ...
 
 
@@ -49,10 +49,13 @@ class FileRepositorySQLAlchemy:
         )
         return self.session.scalar(stmt)
 
-    def list(self) -> list[File]:
+    def list(self, chat_id: int) -> list[File]:
         stmt = (
             select(File)
-            .where(File.deleted_at.is_(None))
+            .where(
+                File.chat_id == chat_id,
+                File.deleted_at.is_(None),
+            )
             .order_by(File.created_at.desc())
         )
         return list(self.session.scalars(stmt))

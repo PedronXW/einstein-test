@@ -80,14 +80,14 @@ def test_ac005_file_crud(session):
     fetched = file_repo.get_by_id(file_.id)
     assert fetched is not None and fetched.name == "relatorio.pdf"
 
-    files = file_repo.list()
+    files = file_repo.list(chat_id=chat.id)
     assert any(f.id == file_.id for f in files)
 
     file_repo.delete(file_.id)
     assert file_repo.get_by_id(file_.id) is None
     deleted = session.get(File, file_.id)
     assert deleted is not None and deleted.deleted_at is not None
-    assert all(f.id != file_.id for f in file_repo.list()), (
+    assert all(f.id != file_.id for f in file_repo.list(chat_id=chat.id)), (
         "list() nao retorna registro soft-deletado"
     )
 
