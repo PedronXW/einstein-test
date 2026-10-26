@@ -1,5 +1,6 @@
 """Schemas Pydantic da aplicação."""
 
 from app.schemas.chat import ChatCreate, ChatRead
+from app.schemas.message import MessageCreate, MessageRead
 
-__all__ = ["ChatCreate", "ChatRead"]
+__all__ = ["ChatCreate", "ChatRead", "MessageCreate", "MessageRead"]
