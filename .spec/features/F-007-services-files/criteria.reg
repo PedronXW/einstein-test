@@ -1,0 +1,6 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-001	FileRepository.list(chat_id) alterado (contrato F-004) com FileRepositorySQLAlchemy.list(chat_id) filtrado por chat; testes da F-004 atualizados para list(chat_id)	T-SPEC
+AC-002	U-001	FileService em app/services/file.py com create_file (faz upload via storage e persiste metadata), get_file, list_files, delete_file; FileNotFoundError para file inexistente	T-SPEC
+AC-003	U-002	interface Storage em app/storage/ com upload(bucket, path, bytes) -> url; implementacao MinIO via boto3 (MinioStorage) e fake/mock p/ testes; storage injetado no service	T-SPEC
+AC-004	U-002	router app/api/files.py com POST /chats/{chat_id}/files (UploadFile multipart + FileCreate), GET /chats/{chat_id}/files, GET /files/{file_id}, DELETE /files/{file_id} registrado no app com validacoes (size >= 0, name/url) e 404 chat/file	T-SPEC
+AC-005	U-002	testes tests/api/test_files.py com TestClient (SQLite :memory: + storage fake) cobrem upload cria metadata e chama storage, list por chat filtra, GET/DELETE por id, 404 chat e file	T-SPEC

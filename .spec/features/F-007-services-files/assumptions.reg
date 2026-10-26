@@ -1,0 +1,7 @@
+#id	tipo	status	texto
+A-001	A	confirmada	CRUD completo no FileService
+A-002	A	confirmada	upload real via boto3 + MinIO do compose (F-001)
+A-003	A	confirmada	upload acontece no POST /chats/{chat_id}/files (multipart)
+A-004	A	confirmada	FileRepository.list muda para list(chat_id) (breaking F-004)
+A-005	A	confirmada	storage abstraido (boto3 MinIO real + fake nos testes)
+A-006	A	confirmada	404 chat/file + validacoes (size >= 0, name/url)
