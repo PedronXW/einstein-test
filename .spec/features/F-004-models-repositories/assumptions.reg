@@ -1,0 +1,6 @@
+#id	tipo	status	texto
+A-001	A	confirmada	PK sao inteiros (sem UUID) e sem constraints extras alem de PKs/FKs
+A-002	A	confirmada	description de Chat e role de Message sao nullable
+A-003	A	confirmada	File.chat_id e FK obrigatoria (arquivo pertence a um chat)
+A-004	A	confirmada	remocao e soft delete (preenche deleted_at, nao DELETE fisico)
+A-005	A	confirmada	testes usam SQLite :memory: + Base.metadata.create_all

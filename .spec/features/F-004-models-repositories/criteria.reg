@@ -1,0 +1,7 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-001	model Chat em app/models/chat.py: id int PK, name, description nullable, created_at, updated_at, deleted_at, relacao messages->Message e files->File via chat_id	T-SPEC
+AC-002	U-001	model File em app/models/file.py: id, name, url, type, size, created_at, updated_at, deleted_at, chat_id FK	T-SPEC
+AC-003	U-001	model Message em app/models/message.py: id, content, role nullable, chat_id FK, created_at, updated_at, deleted_at	T-SPEC
+AC-004	U-002	ChatRepository e FileRepository como Protocol em app/repositories/ com implementacao SQLAlchemy (create/get_by_id/list/delete soft) injetavel por sessao	T-SPEC
+AC-005	U-003	testes em tests/repositories/ usam SQLite :memory: com create_all da Base comprovando CRUD de chat e file com uv run pytest sem postgres	T-SPEC
+AC-006	U-004	migration Alembic gerada (autogenerate) refletindo as 3 tabelas e alembic upgrade head --sql offline emite CREATE TABLE; alembic/versions/ nao esta mais vazio	T-SPEC
