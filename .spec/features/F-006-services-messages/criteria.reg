@@ -1,0 +1,6 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-001	MessageRepository (Protocol) + MessageRepositorySQLAlchemy em app/repositories/message.py com create, get_by_id, list (filtrado por chat_id) e delete (soft); exportado em app/repositories/	T-SPEC
+AC-002	U-002	MessageService em app/services/message.py com create_message, get_message, list_messages, delete_message delegando ao repositório; MessageNotFoundError para message inexistente	T-SPEC
+AC-003	U-003	router app/api/messages.py com POST /chats/{chat_id}/messages, GET /chats/{chat_id}/messages, GET /messages/{message_id}, DELETE /messages/{message_id} registrado no create_app usando ChatService (404 p/ chat) e MessageService	T-SPEC
+AC-004	U-003	schemas Pydantic em app/schemas/message.py: MessageCreate (content obrigatorio, role opcional) e MessageRead (id, content, role, timestamps) com response_model modelado	T-SPEC
+AC-005	U-003	testes tests/api/test_messages.py com TestClient (SQLite :memory:) cobrem criar msg em chat existente, listar por chat, GET por id, DELETE remove (soft some da lista) e 404 para chat inexistente e message inexistente com detail	T-SPEC

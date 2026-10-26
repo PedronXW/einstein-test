@@ -1,0 +1,6 @@
+#id	tipo	status	texto
+A-001	A	confirmada	CRUD completo no MessageService
+A-002	A	confirmada	MessageRepository dedicado (Protocol + SQLAlchemy) espelhando F-004
+A-003	A	confirmada	rotas aninhadas /chats/{chat_id}/messages e GET/DELETE por id
+A-004	A	confirmada	schemas MessageCreate/MessageRead sem validacao fechada de role
+A-005	A	confirmada	404 para chat e message inexistente (padrao F-005)
