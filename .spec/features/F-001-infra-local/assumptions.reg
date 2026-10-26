@@ -1,0 +1,7 @@
+#id	tipo	status	texto
+A-001	A	confirmada	credenciais do banco definidas como variaveis no compose (POSTGRES_USER/POSTGRES_PASSWORD/POSTGRES_DB) com valores de dev
+A-002	A	confirmada	imagem MinIO na tag latest (release estavel atual escolhida pelo usuario)
+A-003	A	confirmada	portas fixas no host: 5432 postgres, 9000 minio API, 9001 minio console
+A-004	A	confirmada	volumes nomeados pgdata e minio-data garantem persistencia
+A-005	A	confirmada	banco de teste nomeado <POSTGRES_DB>_test (einstein_test)
+A-006	A	confirmada	healthchecks com pg_isready (postgres) e curl ao /minio/health/live (minio)

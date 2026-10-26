@@ -1,0 +1,6 @@
+#AC-id	comando-teste	T-id	status	sha	strict
+AC-001	python3 -m unittest tests.infra.test_infra_docker.TestInfraDocker.test_ac001_postgres tests.infra.test_infra_docker.TestInfraDocker.test_ac001_postgres_volume tests.infra.test_infra_docker.TestInfraDocker.test_ac001_postgres_network -v	T-SPEC	proven	1e3c374	0
+AC-002	python3 -m unittest tests.infra.test_infra_docker.TestInfraDocker.test_ac002_minio tests.infra.test_infra_docker.TestInfraDocker.test_ac002_minio_volume tests.infra.test_infra_docker.TestInfraDocker.test_ac002_minio_network -v	T-SPEC	proven	1e3c374	0
+AC-003	python3 -m unittest tests.infra.test_infra_docker.TestInfraDocker.test_ac003_test_db_init -v	T-SPEC	proven	1e3c374	0
+AC-004	python3 -m unittest tests.infra.test_infra_docker.TestInfraDocker.test_ac004_minio_init tests.infra.test_infra_docker.TestInfraDocker.test_ac004_minio_init_depends -v	T-SPEC	proven	1e3c374	0
+AC-005	docker compose config -q && python3 -m unittest tests.infra.test_infra_docker.TestInfraDocker.test_ac005_network_declared tests.infra.test_infra_docker.TestInfraDocker.test_ac005_network_names tests.infra.test_infra_docker.TestInfraDocker.test_ac005_isolated_from_default -v	T-SPEC	proven	1e3c374	0

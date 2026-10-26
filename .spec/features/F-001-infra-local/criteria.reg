@@ -1,0 +1,6 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-001	servico postgres declarado com imagem postgres:16-alpine, healthcheck pg_isready, volume persistente nomeado e porta 5432:5432 na rede dedicada	T-SPEC
+AC-002	U-001	servico minio declarado com imagem minio latest, healthcheck curl /minio/health/live, volume persistente nomeado e portas 9000:9000 e 9001:9001 na rede dedicada	T-SPEC
+AC-003	U-002	banco de teste einstein_test criado no primeiro boot do postgres via init de <POSTGRES_DB>_test com mesmo user do principal	T-SPEC
+AC-004	U-003	bucket padrao einstein criado no primeiro boot do minio via servico minio-init (minio/mc + alias + mc mb)	T-SPEC
+AC-005	U-001	docker compose config valida e os dois servicos compartilham network dedicada nomeada distinta da default	T-SPEC
