@@ -1,13 +1,20 @@
 [project]
 name = "einstein-test"
 version = "0.1.0"
-description = "Add your description here"
+description = "FastAPI hello world + Alembic configurado"
 readme = "README.md"
 authors = [
     { name = "Pedronxw", email = "pedroalmeidan@gmail.com" }
 ]
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "alembic>=1.20.1",
+    "fastapi>=0.162.0",
+    "httpx>=0.28.1",
+    "psycopg[binary]>=3.3.6",
+    "sqlalchemy>=2.1.6",
+    "uvicorn[standard]>=0.54.0",
+]
 
 [project.scripts]
 einstein-test = "einstein_test:main"
