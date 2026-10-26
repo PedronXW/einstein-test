@@ -1,0 +1,64 @@
+"""Repositório de File: Protocol + implementação SQLAlchemy."""
+
+from datetime import UTC, datetime
+from typing import Protocol
+
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app.models.file import File
+
+
+class FileRepository(Protocol):
+    def create(
+        self,
+        chat_id: int,
+        name: str,
+        url: str,
+        type: str | None = None,
+        size: int = 0,
+    ) -> File: ...
+    def get_by_id(self, file_id: int) -> File | None: ...
+    def list(self) -> list[File]: ...
+    def delete(self, file_id: int) -> None: ...
+
+
+class FileRepositorySQLAlchemy:
+    """Implementação SQLAlchemy (soft delete)."""
+
+    def __init__(self, session: Session) -> None:
+        self.session = session
+
+    def create(
+        self,
+        chat_id: int,
+        name: str,
+        url: str,
+        type: str | None = None,
+        size: int = 0,
+    ) -> File:
+        file_ = File(chat_id=chat_id, name=name, url=url, type=type, size=size)
+        self.session.add(file_)
+        self.session.commit()
+        self.session.refresh(file_)
+        return file_
+
+    def get_by_id(self, file_id: int) -> File | None:
+        stmt = select(File).where(
+            File.id == file_id, File.deleted_at.is_(None)
+        )
+        return self.session.scalar(stmt)
+
+    def list(self) -> list[File]:
+        stmt = (
+            select(File)
+            .where(File.deleted_at.is_(None))
+            .order_by(File.created_at.desc())
+        )
+        return list(self.session.scalars(stmt))
+
+    def delete(self, file_id: int) -> None:
+        file_ = self.session.get(File, file_id)
+        if file_ is not None:
+            file_.deleted_at = datetime.now(UTC)
+            self.session.commit()

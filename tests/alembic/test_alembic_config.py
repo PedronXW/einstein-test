@@ -1,7 +1,7 @@
-"""Testes TDD da feature F-002 (Alembic configurado, sem migrations).
+"""Testes TDD da feature F-002/F-004 (Alembic configurado + models).
 
 Valida AC-003 (deps), AC-004 (alembic.ini/env.py/DATABASE_URL/target_metadata)
-e AC-005 (Base declarativa + versions/ vazio).
+e AC-005 (Base registra as models Chat/File/Message da F-004).
 """
 
 import os
@@ -12,6 +12,7 @@ import tomllib
 import pytest
 
 from app.db.base import Base
+from app.models import Chat, File, Message  # noqa: F401  (registra as tabelas)
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 COMPOSE = ROOT / "docker-compose.yml"
@@ -76,16 +77,28 @@ def test_ac004_compose_has_postgres() -> None:
 
 def test_ac005_base_declarativa() -> None:
     assert Base.metadata is not None, "Base.metadata disponivel"
-    assert len(Base.metadata.tables) == 0, (
-        "consistente com versions/ vazio"
+    expected = {"chats", "files", "messages"}
+    assert expected <= set(Base.metadata.tables), (
+        "Base registra as models da F-004 (chats, files, messages)"
     )
 
 
-def test_ac005_no_migrations() -> None:
+def test_ac006_migration_crea_tables(alembic_env: dict[str, str]) -> None:
     versions = ROOT / "alembic" / "versions"
-    assert versions.is_dir(), "alembic/versions/ existe"
     migrations = [
         p for p in versions.iterdir()
-        if p.name != ".gitkeep" and p.suffix == ".py"
+        if p.suffix == ".py" and p.name != "__init__.py"
     ]
-    assert migrations == [], "nenhuma migration gerada"
+    assert migrations, "ao menos uma migration gerada"
+    proc = subprocess.run(
+        ["uv", "run", "alembic", "upgrade", "head", "--sql"],
+        cwd=ROOT,
+        env=alembic_env,
+        capture_output=True,
+        text=True,
+    )
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    for table in ("chats", "files", "messages"):
+        assert f"CREATE TABLE {table}" in proc.stdout, (
+            f"migration offline emite CREATE TABLE {table}"
+        )
