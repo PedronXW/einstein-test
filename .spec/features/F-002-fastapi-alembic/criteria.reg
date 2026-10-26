@@ -1,0 +1,6 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-001	pacote app/ com create_app() em app/main.py que inclui router de app/api/ e GET / responde 200 com corpo {"message": "Hello World"}	T-SPEC
+AC-002	U-001	TestClient valida GET / -> 200 com exatamente {"message": "Hello World"}	T-SPEC
+AC-003	U-002	dependencias fastapi, uvicorn e httpx presentes no pyproject.toml	T-SPEC
+AC-004	U-003	alembic.ini e alembic/ presentes; env.py le DATABASE_URL do ambiente com default postgresql://einstein:einstein@localhost:5432/einstein e define target_metadata = Base.metadata	T-SPEC
+AC-005	U-003	Base declarativa SQLAlchemy existe (app/db/base.py com Base = declarative_base()) referenciada pelo Alembic e diretorio alembic/versions/ vazio (nenhuma migration gerada)	T-SPEC

@@ -1,0 +1,6 @@
+#id	tipo	status	texto
+A-001	A	confirmada	estrutura app/ na raiz com routers separados (escolha do usuario)
+A-002	A	confirmada	endpoint hello em GET / com resposta {"message": "Hello World"}
+A-003	A	confirmada	uvicorn incluido como dependencia e runner local
+A-004	A	confirmada	alembic aponta para o postgres do docker compose via DATABASE_URL
+A-005	A	confirmada	base declarativa SQLAlchemy incluida (sem models, sem migrations)
