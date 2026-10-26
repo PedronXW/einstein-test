@@ -1,0 +1,5 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-001	pytest declarado como dependencia de dev em [dependency-groups].dev no pyproject.toml e instalavel via uv	T-SPEC
+AC-002	U-002	arquivos de teste convertidos para pytest (funcoes test_* sem classes unittest.TestCase): tests/api/test_hello.py, tests/alembic/test_alembic_config.py e tests/infra/test_infra_docker.py	T-SPEC
+AC-003	U-001	uv run pytest roda verde na raiz (exit 0) cobrindo todos os testes antes cobertos por unittest sem reducao	T-SPEC
+AC-004	U-003	comandos no trace.tsv de F-001 e F-002 atualizados para uv run pytest (mesmos criterios/provas, runner novo)	T-SPEC

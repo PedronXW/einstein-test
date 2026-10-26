@@ -1,0 +1,5 @@
+#AC-id	comando-teste	T-id	status	sha	strict
+AC-001	uv run python -c "import tomllib; p=tomllib.load(open('pyproject.toml','rb')); assert any(str(d).startswith('pytest') for d in p.get('dependency-groups',{}).get('dev',[]))"	T-SPEC	proven	5e8f4d7	0
+AC-002	! grep -rn 'unittest.TestCase' tests/	T-SPEC	proven	5e8f4d7	0
+AC-003	uv run pytest -q	T-SPEC	proven	5e8f4d7	0
+AC-004	test $(grep -hc 'uv run pytest' /home/pedro/dev/einstein-test/.spec/features/F-001-infra-local/trace.tsv /home/pedro/dev/einstein-test/.spec/features/F-002-fastapi-alembic/trace.tsv | paste -sd+ | bc) -eq 10	T-SPEC	proven	5e8f4d7	0

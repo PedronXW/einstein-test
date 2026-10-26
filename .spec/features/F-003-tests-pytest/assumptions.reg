@@ -1,0 +1,4 @@
+#id	tipo	status	texto
+A-001	A	confirmada	pytest entra como dev-dependency (nao runtime) num grupo .dev
+A-002	A	confirmada	migrar testes preservando nomes test_acNNN_* (rastreabilidade com ACs)
+A-003	A	confirmada	fixtures pytest podem substituir setUp/setUpClass de unittest
