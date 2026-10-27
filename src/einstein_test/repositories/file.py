@@ -1,5 +1,7 @@
 """Repositório de File: Protocol + implementação SQLAlchemy."""
 
+from __future__ import annotations
+
 from datetime import UTC, datetime
 from typing import Protocol
 
@@ -20,6 +22,9 @@ class FileRepository(Protocol):
     ) -> File: ...
     def get_by_id(self, file_id: int) -> File | None: ...
     def list(self, chat_id: int) -> list[File]: ...
+    def update_chunk_ids(
+        self, file_id: int, chunk_ids: list[int], vector_reference: str
+    ) -> None: ...
     def delete(self, file_id: int) -> None: ...
 
 
@@ -59,6 +64,15 @@ class FileRepositorySQLAlchemy:
             .order_by(File.created_at.desc())
         )
         return list(self.session.scalars(stmt))
+
+    def update_chunk_ids(
+        self, file_id: int, chunk_ids: list[int], vector_reference: str
+    ) -> None:
+        file_ = self.session.get(File, file_id)
+        if file_ is not None:
+            file_.chunk_ids = chunk_ids
+            file_.vector_reference = vector_reference
+            self.session.commit()
 
     def delete(self, file_id: int) -> None:
         file_ = self.session.get(File, file_id)

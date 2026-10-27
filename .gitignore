@@ -8,3 +8,6 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Configuração local (nunca versionar)
+.env

@@ -1,6 +1,9 @@
 """Model File."""
 
-from sqlalchemy import BigInteger, ForeignKey, String
+import uuid
+
+from sqlalchemy import JSON, BigInteger, ForeignKey, String, text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from einstein_test.db.base import Base
@@ -17,6 +20,15 @@ class File(TimestampMixin, Base):
     size: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
     chat_id: Mapped[int] = mapped_column(
         ForeignKey("chats.id"), nullable=False, index=True
+    )
+    chunk_ids: Mapped[list[int]] = mapped_column(
+        JSON().with_variant(JSONB, "postgresql"),
+        nullable=False,
+        default=list,
+        server_default=text("'[]'"),
+    )
+    vector_reference: Mapped[str | None] = mapped_column(
+        String(36), nullable=True, default=lambda: str(uuid.uuid4())
     )
 
     chat: Mapped["Chat"] = relationship(back_populates="files")

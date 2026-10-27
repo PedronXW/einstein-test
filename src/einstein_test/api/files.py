@@ -8,7 +8,8 @@ from einstein_test.repositories.chat import ChatRepositorySQLAlchemy
 from einstein_test.repositories.file import FileRepositorySQLAlchemy
 from einstein_test.schemas.file import FileRead
 from einstein_test.services.chat import ChatNotFoundError, ChatService
-from einstein_test.services.file import FileNotFound, FileService
+from einstein_test.services.file import FileNotFound, FileService, VectorizationError
+from einstein_test.vector import VectorRepositorySQLAlchemy
 
 router = APIRouter(tags=["files"])
 
@@ -20,7 +21,10 @@ def _chat_service(session: Session) -> ChatService:
 
 
 def _file_service(session: Session) -> FileService:
-    return FileService(FileRepositorySQLAlchemy(session))
+    return FileService(
+        FileRepositorySQLAlchemy(session),
+        vector_repository=VectorRepositorySQLAlchemy(session),
+    )
 
 
 def _ensure_chat_exists(session: Session, chat_id: int) -> None:
@@ -31,22 +35,25 @@ def _ensure_chat_exists(session: Session, chat_id: int) -> None:
 
 
 @router.post("/chats/{chat_id}/files", response_model=FileRead)
-async def upload_file(
+def upload_file(
     chat_id: int,
     file: UploadFile,
     session: Session = Depends(get_session),
 ) -> FileRead:
     _ensure_chat_exists(session, chat_id)
-    content = await file.read()
+    content = file.file.read(MAX_UPLOAD_SIZE + 1)
     if len(content) > MAX_UPLOAD_SIZE:
         raise HTTPException(status_code=413, detail="arquivo muito grande")
     service = _file_service(session)
-    file_ = service.create_file(
-        chat_id=chat_id,
-        name=file.filename or "arquivo",
-        content=content,
-        content_type=file.content_type,
-    )
+    try:
+        file_ = service.create_file(
+            chat_id=chat_id,
+            name=file.filename or "arquivo",
+            content=content,
+            content_type=file.content_type,
+        )
+    except VectorizationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from None
     return FileRead.model_validate(file_)
 
 

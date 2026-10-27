@@ -14,4 +14,6 @@ class FileRead(BaseModel):
     url: str
     type: str | None = None
     size: int = Field(ge=0)
+    chunk_ids: list[int] = Field(default_factory=list)
+    vector_reference: str | None = None
     created_at: datetime

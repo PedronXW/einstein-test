@@ -6,6 +6,7 @@ from einstein_test.repositories.message import (
     MessageRepository,
     MessageRepositorySQLAlchemy,
 )
+from einstein_test.vector.repository import VectorRepository, VectorRepositorySQLAlchemy
 
 __all__ = [
     "ChatRepository",
@@ -14,4 +15,6 @@ __all__ = [
     "FileRepositorySQLAlchemy",
     "MessageRepository",
     "MessageRepositorySQLAlchemy",
+    "VectorRepository",
+    "VectorRepositorySQLAlchemy",
 ]
