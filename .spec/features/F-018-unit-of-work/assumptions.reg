@@ -1,0 +1,5 @@
+#id	tipo	status	texto
+A-001	A	confirmada	Unit of Work: repos flusheiam, sessao do request commita no final
+A-002	A	confirmada	Rollback automatico em erro na sessao do request
+A-003	A	confirmada	Task Celery atomica (chunks + status num commit)
+A-004	A	confirmada	Testes de rollback/atomicidade

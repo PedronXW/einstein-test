@@ -1,0 +1,6 @@
+#AC-id	comando-teste	T-id	status	sha	strict
+AC-001	uv run pytest tests/infra/test_uow.py -q -k 'ac001'	T-SPEC	proven	93ceed3	0
+AC-002	uv run pytest tests/infra/test_uow.py -q -k 'ac002'	T-SPEC	proven	93ceed3	0
+AC-003	uv run pytest tests/infra/test_uow.py -q -k 'ac003'	T-SPEC	proven	93ceed3	0
+AC-004	uv run pytest tests/infra/test_uow.py -q -k 'ac004'	T-SPEC	proven	93ceed3	0
+AC-005	uv run pytest tests/infra/test_uow.py -q	T-SPEC	proven	93ceed3	0

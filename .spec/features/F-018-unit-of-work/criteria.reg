@@ -1,0 +1,6 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-001	repositorios (chat/file/message/user/vector) trocam session.commit() por session.flush() nos metodos de escrita e delete	T-SPEC
+AC-002	U-002	get_session commita ao final do request e faz rollback se erro; API nao commita manualmente nos services	T-SPEC
+AC-003	U-002	testes: create_file com vetorizacao falha -> rollback (sem File/FileChunk orfao); create_message falho -> nenhuma linha; caminho feliz persiste	T-SPEC
+AC-004	U-003	task Celery vectorize_file insere chunks e atualiza status/error num unico commit (rollback total em erro); teste de atomicidade/idempotencia da task	T-SPEC
+AC-005	U-001	suite completa verde (252+ testes) sem quebra de comportamento; commit unico preservado nos caminhos felizes	T-SPEC
