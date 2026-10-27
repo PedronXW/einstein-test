@@ -8,12 +8,17 @@ from einstein_test.api.chats import router as chats_router
 from einstein_test.api.files import router as files_router
 from einstein_test.api.messages import router as messages_router
 from einstein_test.api.router import router
+from einstein_test.logging_setup import configure_logging
+from einstein_test.middleware.logging_middleware import RequestIdMiddleware
 from einstein_test.middleware.rate_limit import RateLimitMiddleware
 
 
 def create_app() -> FastAPI:
+    configure_logging()
     app = FastAPI(title="einstein-test")
+    # ordem: RequestId externo (captura 429 do rate limit e 500), depois rate limit
     app.add_middleware(RateLimitMiddleware)
+    app.add_middleware(RequestIdMiddleware)
     app.include_router(router)
     app.include_router(auth_router)
     app.include_router(chats_router)
