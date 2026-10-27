@@ -1,0 +1,3 @@
+#id	tipo	status	texto
+A-001	A	confirmada	Indice HNSW com vector_cosine_ops
+A-002	A	confirmada	Prova via migration (--sql) + busca segue ok (sem postgres no CI)

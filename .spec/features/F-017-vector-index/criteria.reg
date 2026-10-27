@@ -1,0 +1,3 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-001	migration Alembic adiciona indice HNSW: CREATE INDEX ... ON file_chunks USING hnsw (embedding vector_cosine_ops); nome ix_file_chunks_embedding_hnsw; alembic upgrade head --sql emite	T-SPEC
+AC-002	U-002	search_similar (pgvector <=>) continua funcionando apos a migration; suite verde (sqlite/fallback); sem mudanca de contrato	T-SPEC
