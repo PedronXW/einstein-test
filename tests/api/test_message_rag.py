@@ -116,6 +116,10 @@ def test_ac005_llm_error_emits_error_event_without_saving(client):
             raise RuntimeError("llm quebrou")
             yield "nunca"
 
+        async def astream(self, prompt):
+            raise RuntimeError("llm quebrou")
+            yield "nunca"
+
     def _factory(*args, **kwargs):
         return RagService(llm=_BoomLLM(), retriever=kwargs["retriever"])
 

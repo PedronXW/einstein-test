@@ -29,10 +29,26 @@ def client():
 
     configure_session_factory(engine)
 
+    from einstein_test.services.rag import FakeChatLLM, RagService, set_rag_factory
+    from einstein_test.vector import FakeEmbedder
+
+    def _factory(*args, **kwargs):
+        return RagService(
+            llm=FakeChatLLM(),
+            retriever=kwargs["retriever"],
+            embedder=FakeEmbedder(),
+        )
+
+    set_rag_factory(_factory)
+
     app = create_app()
     app.dependency_overrides.clear()
     with TestClient(app) as c:
         yield c, engine
+
+    from einstein_test.services.rag import reset_rag_factory
+
+    reset_rag_factory()
     engine.dispose()
 
 
