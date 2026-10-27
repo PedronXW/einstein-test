@@ -8,7 +8,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
+from einstein_test.api.auth import get_current_user
 from einstein_test.api.dependencies import get_session
+from einstein_test.models import User
 from einstein_test.repositories import VectorRepositorySQLAlchemy
 from einstein_test.repositories.chat import ChatRepositorySQLAlchemy
 from einstein_test.repositories.message import MessageRepositorySQLAlchemy
@@ -36,11 +38,8 @@ def _rag_service(session: Session) -> RagService:
     return get_rag_service(VectorRepositorySQLAlchemy(session))
 
 
-def _ensure_chat_exists(session: Session, chat_id: int) -> None:
-    try:
-        _chat_service(session).get_chat(chat_id)
-    except ChatNotFoundError:
-        raise HTTPException(status_code=404, detail="chat não encontrado") from None
+def _ensure_chat_owned(session: Session, chat_id: int, user_id: int) -> None:
+    _chat_service(session).get_chat(chat_id, user_id=user_id)
 
 
 def _sse_event(data: str, *, event: str | None = None) -> str:
@@ -56,8 +55,12 @@ def create_message(
     chat_id: int,
     payload: MessageCreate,
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ) -> StreamingResponse:
-    _ensure_chat_exists(session, chat_id)
+    try:
+        _ensure_chat_owned(session, chat_id, current_user.id)
+    except ChatNotFoundError:
+        raise HTTPException(status_code=404, detail="chat não encontrado") from None
     message_service = _message_service(session)
     user_message = message_service.create_message(
         chat_id=chat_id, content=payload.content, role="user"
@@ -106,9 +109,14 @@ def create_message(
 
 @router.get("/chats/{chat_id}/messages", response_model=list[MessageRead])
 def list_messages(
-    chat_id: int, session: Session = Depends(get_session)
+    chat_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ) -> list[MessageRead]:
-    _ensure_chat_exists(session, chat_id)
+    try:
+        _ensure_chat_owned(session, chat_id, current_user.id)
+    except ChatNotFoundError:
+        raise HTTPException(status_code=404, detail="chat não encontrado") from None
     service = _message_service(session)
     messages = service.list_messages(chat_id=chat_id)
     return [MessageRead.model_validate(m) for m in messages]
@@ -116,12 +124,15 @@ def list_messages(
 
 @router.get("/messages/{message_id}", response_model=MessageRead)
 def get_message(
-    message_id: int, session: Session = Depends(get_session)
+    message_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ) -> MessageRead:
     service = _message_service(session)
     try:
         message = service.get_message(message_id)
-    except MessageNotFoundError:
+        _ensure_chat_owned(session, message.chat_id, current_user.id)
+    except (MessageNotFoundError, ChatNotFoundError):
         raise HTTPException(
             status_code=404, detail="message não encontrado"
         ) from None
@@ -130,12 +141,16 @@ def get_message(
 
 @router.delete("/messages/{message_id}")
 def delete_message(
-    message_id: int, session: Session = Depends(get_session)
+    message_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ) -> dict[str, str]:
     service = _message_service(session)
     try:
+        message = service.get_message(message_id)
+        _ensure_chat_owned(session, message.chat_id, current_user.id)
         service.delete_message(message_id)
-    except MessageNotFoundError:
+    except (MessageNotFoundError, ChatNotFoundError):
         raise HTTPException(
             status_code=404, detail="message não encontrado"
         ) from None

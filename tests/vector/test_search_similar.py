@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from einstein_test.db.base import Base
 from einstein_test.models.file import File
 from einstein_test.models.file_chunk import FileChunk
+from einstein_test.models import User
 from einstein_test.vector.repository import VectorRepositorySQLAlchemy
 from einstein_test.vector.similarity import (
     cosine_similarity,
@@ -22,8 +23,12 @@ from einstein_test.vector.similarity import (
 def _setup(engine):
     Base.metadata.create_all(engine)
     with Session(engine) as session:
+        owner = User(email="dono@b.com", password_hash="x")
+        other = User(email="outro@b.com", password_hash="x")
+        session.add_all([owner, other])
+        session.flush()
         chat = __import__("einstein_test.models.chat", fromlist=["Chat"]).Chat(
-            name="Chat"
+            user_id=owner.id, name="Chat"
         )
         session.add(chat)
         session.flush()
@@ -32,7 +37,7 @@ def _setup(engine):
         session.add_all([f1, f2])
         session.flush()
         chat2 = __import__("einstein_test.models.chat", fromlist=["Chat"]).Chat(
-            name="Outro"
+            user_id=other.id, name="Outro"
         )
         session.add(chat2)
         session.flush()

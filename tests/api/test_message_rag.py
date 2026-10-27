@@ -2,10 +2,8 @@
 
 Valida que POST /chats/{chat_id}/messages agora retorna text/event-stream com
 os tokens do LLM fake, [DONE] com o message_id da resposta salva como
-role=assistant, e error sem salvar em falha do LLM.
+role=assistant, e error sem salvar em falha do LLM. Adaptado ao auth (F-012).
 """
-
-import json
 
 import pytest
 from fastapi.testclient import TestClient
@@ -15,6 +13,7 @@ from sqlalchemy.pool import StaticPool
 from einstein_test.db.base import Base
 from einstein_test.main import create_app
 from einstein_test.services.rag import FakeChatLLM, RagService, set_rag_factory
+from tests.conftest import register_and_login
 
 
 @pytest.fixture
@@ -30,7 +29,6 @@ def client():
 
     configure_session_factory(engine)
 
-    from einstein_test.services.rag import RagService, set_rag_factory
     from einstein_test.vector import FakeEmbedder
 
     def _factory(*args, **kwargs):
@@ -53,46 +51,52 @@ def client():
     engine.dispose()
 
 
-def _create_chat(client):
-    return client.post("/chats", json={"name": "Chat"}).json()
+def _register_and_login(client, email="user@b.com"):
+    return register_and_login(client, email=email)
 
 
-def _ask(client, chat_id, content="pergunta"):
+def _create_chat(client, headers):
+    return client.post("/chats", json={"name": "Chat"}, headers=headers).json()
+
+
+def _ask(client, chat_id, headers, content="pergunta"):
     return client.post(
         f"/chats/{chat_id}/messages",
         json={"content": content},
-        headers={"Accept": "text/event-stream"},
+        headers={**headers, "Accept": "text/event-stream"},
     )
 
 
 def test_ac004_post_messages_returns_sse(client):
     c, engine = client
-    chat = _create_chat(c)
-    resp = _ask(c, chat["id"])
+    h = _register_and_login(c)
+    chat = _create_chat(c, h)
+    resp = _ask(c, chat["id"], h)
     assert resp.status_code == 200
     assert resp.headers["content-type"].startswith("text/event-stream")
 
 
 def test_ac004_sse_contains_tokens_and_done(client):
     c, engine = client
-    chat = _create_chat(c)
-    resp = _ask(c, chat["id"], content="pergunta")
+    h = _register_and_login(c)
+    chat = _create_chat(c, h)
+    resp = _ask(c, chat["id"], h, content="pergunta")
     body = resp.text
     assert '"token1"' in body, "tokens do LLM fake no SSE"
     assert '"token2"' in body
     assert "[DONE]" in body, "evento [DONE] presente"
     assert "message_id" in body, "id da resposta no stream"
-    # [DONE] é o último evento
     last_frame = body.rstrip().split("\n\n")[-1]
     assert "DONE" in last_frame, "[DONE] deve ser o último evento"
 
 
 def test_ac004_assistant_message_persisted(client):
     c, engine = client
-    chat = _create_chat(c)
-    resp = _ask(c, chat["id"])
+    h = _register_and_login(c)
+    chat = _create_chat(c, h)
+    resp = _ask(c, chat["id"], h)
     assert resp.status_code == 200
-    msgs = c.get(f"/chats/{chat['id']}/messages").json()
+    msgs = c.get(f"/chats/{chat['id']}/messages", headers=h).json()
     roles = [m["role"] for m in msgs]
     assert "user" in roles, "message user criada"
     assert "assistant" in roles, "message assistant salva"
@@ -102,10 +106,10 @@ def test_ac004_assistant_message_persisted(client):
 
 def test_ac005_llm_error_emits_error_event_without_saving(client):
     c, engine = client
-    chat = _create_chat(c)
+    h = _register_and_login(c)
+    chat = _create_chat(c, h)
 
     from einstein_test.services.rag import reset_rag_factory
-    from einstein_test.vector import FakeEmbedder
 
     class _BoomLLM:
         def stream(self, prompt):
@@ -113,17 +117,13 @@ def test_ac005_llm_error_emits_error_event_without_saving(client):
             yield "nunca"
 
     def _factory(*args, **kwargs):
-        return RagService(
-            llm=_BoomLLM(),
-            retriever=kwargs["retriever"],
-            embedder=FakeEmbedder(),
-        )
+        return RagService(llm=_BoomLLM(), retriever=kwargs["retriever"])
 
     set_rag_factory(_factory)
     try:
-        resp = _ask(c, chat["id"], content="quebra?")
+        resp = _ask(c, chat["id"], h, content="quebra?")
         assert "error" in resp.text.lower(), "evento de erro presente"
-        msgs = c.get(f"/chats/{chat['id']}/messages").json()
+        msgs = c.get(f"/chats/{chat['id']}/messages", headers=h).json()
         roles = [m["role"] for m in msgs]
         assert "assistant" not in roles, "nenhuma assistant salva em erro"
         assert "user" in roles, "message user permanece"
@@ -133,5 +133,6 @@ def test_ac005_llm_error_emits_error_event_without_saving(client):
 
 def test_ac007_missing_chat_404(client):
     c, engine = client
-    resp = _ask(c, 999999)
+    h = _register_and_login(c)
+    resp = _ask(c, 999999, h)
     assert resp.status_code == 404
