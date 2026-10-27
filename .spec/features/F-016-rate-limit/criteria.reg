@@ -1,0 +1,6 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-002	RateLimitMiddleware aplicado no app; identifica usuario autenticado (Authorization Bearer sub/email) ou IP (X-Forwarded-For/remote)	T-SPEC
+AC-002	U-002	limites default por caminho via env: POST /auth/login=10/min, POST /chats/*/messages=20/min, POST /chats/*/files=10/min, demais protegidos=120/min	T-SPEC
+AC-003	U-001	ao exceder limite -> 429 com Retry-After (segundos) e mensagem; endpoints abertos (POST /users) limitados por IP	T-SPEC
+AC-004	U-004	contador em memoria (janela deslizante por chave usuario|rota) com reset em testes; sem dependencia nova (time)	T-SPEC
+AC-005	U-002	middleware nao limita /docs /openapi.json /health; autenticados contam por usuario (nao por IP)	T-SPEC

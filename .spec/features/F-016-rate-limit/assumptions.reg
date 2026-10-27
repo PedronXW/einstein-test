@@ -1,0 +1,5 @@
+#id	tipo	status	texto
+A-001	A	confirmada	Middleware global por usuario/IP, sem lib externa (slowapi)
+A-002	A	confirmada	Limites default por endpoint via env (login=10, messages=20, files=10, global=120)
+A-003	A	confirmada	Contador em memoria (dict com janela deslizante)
+A-004	A	confirmada	Resposta 429 com Retry-After
