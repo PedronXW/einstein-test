@@ -1,0 +1,10 @@
+#id	tipo	status	texto
+A-001	A	confirmada	Banco de vetores: pgvector no postgres existente do compose (F-009)
+A-002	A	confirmada	Embedder real: Cohere cohere/embed-v4.0 (1024 dims) via endpoint OpenAI-compativel https://spillway.ensinoeinstein.com/openai/v1
+A-009	A	confirmada	Configuracao via .env (OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_MODEL); .env nao versionado (gitignored)
+A-003	A	confirmada	Nos testes, embedder fake deterministico (sem rede/chave)
+A-004	A	confirmada	Extracao de texto: texto puro + PDF via pypdf
+A-005	A	confirmada	Chunking por tamanho de caracteres com overlap; default 1000/200
+A-006	A	confirmada	Vetorizacao sincrona dentro do POST /chats/{chat_id}/files
+A-007	A	confirmada	File guarda chunk_ids (JSONB) + vector_reference (UUID)
+A-008	A	confirmada	OpenAIEmbedder usa a lib oficial openai (nova dependencia); pypdf adicionado

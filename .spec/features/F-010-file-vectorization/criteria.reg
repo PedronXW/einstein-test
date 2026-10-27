@@ -1,0 +1,9 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-001	Protocol Embedder em src/einstein_test/vector/ com embed(texts: list[str]) -> list[list[float]]; OpenAIEmbedder (config via .env: OPENAI_API_KEY, OPENAI_BASE_URL https://spillway.ensinoeinstein.com/openai/v1, model cohere/embed-v4.0, dim 1024) e FakeEmbedder deterministico (hash -> vetor 1024 dims) para testes	T-SPEC
+AC-002	U-002	TextExtractor extrai texto de .txt/.md (utf-8) e .pdf via pypdf; arquivo sem texto extraivel resulta em chunks vazios	T-SPEC
+AC-003	U-002	TextChunker divide texto em chunks de chunk_size caracteres com overlap; default chunk_size=1000, overlap=200	T-SPEC
+AC-004	U-003	Tabela file_chunks (pgvector) com id PK, file_id FK, chunk_index, content (text), embedding vector(1024); VectorRepository (Protocol + SQLAlchemy pgvector) com insert_chunks(file_id, chunks) e get_chunks(file_id)	T-SPEC
+AC-005	U-004	Model File ganha chunk_ids: list[int] (JSONB) e vector_reference: str | None (UUID do documento vetorial); FileService.create_file popula apos vetorizar	T-SPEC
+AC-006	U-005	Upload sincrono: POST /chats/{chat_id}/files extrai texto, chunk, embed e persiste vetores antes de retornar FileRead (com chunk_ids e vector_reference no schema)	T-SPEC
+AC-007	U-006	Migration Alembic: CREATE EXTENSION IF NOT EXISTS vector, tabela file_chunks com embedding vector(1024) e colunas novas em files; alembic upgrade head --sql emite os comandos	T-SPEC
+AC-008	U-001	Testes (SQLite + fake embedder): service vetoriza e popula chunk_ids/vector_reference; API retorna ids; extractor de PDF com fixture simples	T-SPEC
