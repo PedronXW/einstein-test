@@ -12,6 +12,7 @@ from einstein_test.api.auth import get_current_user
 from einstein_test.api.dependencies import get_session
 from einstein_test.logging_setup import current_request_id, get_logger
 from einstein_test.models import User
+from einstein_test.models.user import DEFAULT_USER_MODEL
 from einstein_test.repositories import VectorRepositorySQLAlchemy
 from einstein_test.repositories.chat import ChatRepositorySQLAlchemy
 from einstein_test.repositories.message import MessageRepositorySQLAlchemy
@@ -61,8 +62,9 @@ async def create_message(
     request_id = current_request_id()
     if current_user.model is not None and current_user.model not in allowed_models():
         # allowlist re-validada em call-time (defense in depth): se o modelo
-        # armazenado saiu da allowlist, usa o default do ambiente.
-        current_user.model = None
+        # armazenado saiu da allowlist, usa o primeiro modelo permitido.
+        models = allowed_models()
+        current_user.model = models[0] if models else DEFAULT_USER_MODEL
     try:
         await run_in_threadpool(_ensure_chat_owned, session, chat_id, current_user.id)
     except ChatNotFoundError:

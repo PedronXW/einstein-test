@@ -35,10 +35,11 @@ def client():
 
 
 def test_ac001_user_model_column():
-    from einstein_test.models.user import User
+    from einstein_test.models.user import DEFAULT_USER_MODEL, User
 
     assert "model" in User.__table__.c, "User.model existe"
-    assert User.__table__.c.model.nullable is True, "model nullable (default NULL)"
+    assert User.__table__.c.model.nullable is True, "coluna nullable"
+    assert DEFAULT_USER_MODEL == "azure/gpt-5-mini", "modelo padrão é o mini"
 
 
 def test_ac001_userread_exposes_model():
@@ -64,13 +65,13 @@ def test_ac003_allowed_models_env_override(monkeypatch):
     assert rag.allowed_models() == ["azure/gpt-5-mini", "azure/gpt-777"]
 
 
-def test_ac002_get_me_returns_model(client):
+def test_ac002_get_me_returns_default_model(client):
     c, h = client
     r = c.get("/users/me", headers=h)
     assert r.status_code == 200
     body = r.json()
     assert "model" in body
-    assert body["model"] is None, "sem modelo -> None (default)"  # ou não setado
+    assert body["model"] == "azure/gpt-5-mini", "usuário novo usa o modelo mini padrão"
 
 
 def test_ac002_patch_me_valid(client):
@@ -91,10 +92,10 @@ def test_ac002_patch_me_invalid_422(client):
 
 def test_ac002_patch_me_null_restores_default(client):
     c, h = client
-    c.patch("/users/me", json={"model": "azure/gpt-5-mini"}, headers=h)
+    c.patch("/users/me", json={"model": "azure/gpt-6-luna"}, headers=h)
     r = c.patch("/users/me", json={"model": None}, headers=h)
     assert r.status_code == 200
-    assert r.json()["model"] is None, "null restaura default"
+    assert r.json()["model"] == "azure/gpt-5-mini", "null restaura o modelo mini padrão"
 
 
 def test_ac004_get_rag_service_uses_user_model(monkeypatch):
@@ -191,7 +192,9 @@ def test_call_time_model_outside_allowlist_uses_default(monkeypatch, client):
         headers={**h, "Accept": "text/event-stream"},
     )
     assert resp.status_code == 200
-    assert captured.get("model") is None, "model fora da allowlist vira default (null)"
+    assert captured.get("model") == "azure/gpt-6-luna", (
+        "model fora da allowlist cai para o primeiro modelo permitido"
+    )
     rag.reset_rag_factory()
 
 

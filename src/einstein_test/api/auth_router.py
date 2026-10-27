@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from einstein_test.api.auth import create_access_token, get_current_user
 from einstein_test.api.dependencies import get_session
 from einstein_test.models import User
+from einstein_test.models.user import DEFAULT_USER_MODEL
 from einstein_test.schemas.user import TokenRead, UserCreate, UserLogin, UserRead
 from einstein_test.services.auth import (
     AuthService,
@@ -66,8 +67,8 @@ def update_me(
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ) -> UserRead:
-    model = payload.model.strip() if payload.model else None
-    if model is not None and model not in allowed_models():
+    model = payload.model.strip() if payload.model else DEFAULT_USER_MODEL
+    if model not in allowed_models():
         raise HTTPException(
             status_code=422, detail="modelo não suportado"
         )

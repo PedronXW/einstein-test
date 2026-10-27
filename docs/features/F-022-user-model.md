@@ -2,12 +2,14 @@
 
 ## O que foi feito
 Cada usuário pode escolher qual modelo de LLM usar nas **análises/perguntas do
-RAG**. A escolha fica em uma coluna **`User.model`** (nullable — `null` = usa o
-default do ambiente). O usuário consulta e atualiza via **`GET /users/me`** e
-**`PATCH /users/me {"model": ...}`**. Modelos permitidos são definidos **somente
-via env** (`ALLOWED_MODELS`, default `azure/gpt-5-mini,azure/gpt-6-luna`). O
-RAG agora cria um **`ChatOpenAIAdapter` por usuário** com o modelo escolhido
-(substitui o singleton global do LLM; o embedder continua compartilhado).
+RAG**. A escolha fica em uma coluna **`User.model`** com **default
+`azure/gpt-5-mini`** — usuários criados já nascem com o modelo mini. O usuário
+consulta e atualiza via **`GET /users/me`** e **`PATCH /users/me
+{"model": ...}`** (null restaura o mini padrão). Modelos permitidos são
+definidos **somente via env** (`ALLOWED_MODELS`, default
+`azure/gpt-5-mini,azure/gpt-6-luna`). O RAG agora cria um
+**`ChatOpenAIAdapter` por usuário** com o modelo escolhido (substitui o
+singleton global do LLM; o embedder continua compartilhado).
 
 ## Critérios de aceite implementados
 
