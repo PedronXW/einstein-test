@@ -33,3 +33,35 @@ def cosine_similarity_search(
         reverse=True,
     )
     return ranked[:top_k]
+
+
+def per_file_top_k_search(
+    query: list[float],
+    rows: list[FileChunk],
+    chunks_per_file: int = 2,
+    max_chunks: int = 12,
+) -> list[FileChunk]:
+    """Retorna os chunks mais similares por arquivo.
+
+    Para cada arquivo do chat, mantém os `chunks_per_file` chunks mais
+    similares; depois reordena globalmente por similaridade e trunca em
+    `max_chunks` — priorizando os arquivos mais relevantes.
+    """
+    by_file: dict[int, list[FileChunk]] = {}
+    for chunk in rows:
+        by_file.setdefault(chunk.file_id, []).append(chunk)
+
+    per_file: list[tuple[float, FileChunk]] = []
+    for file_id, file_chunks in by_file.items():
+        file_ranked = sorted(
+            file_chunks,
+            key=lambda c: cosine_similarity(query, list(c.embedding)),
+            reverse=True,
+        )
+        for chunk in file_ranked[:chunks_per_file]:
+            per_file.append(
+                (cosine_similarity(query, list(chunk.embedding)), chunk)
+            )
+
+    per_file.sort(key=lambda item: item[0], reverse=True)
+    return [chunk for _, chunk in per_file[:max_chunks]]

@@ -3,10 +3,14 @@
 from typing import Any, Protocol
 
 from sqlalchemy import delete, insert, select
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from einstein_test.models.file import File
 from einstein_test.models.file_chunk import EMBEDDING_DIM, FileChunk
+
+DEFAULT_CHUNKS_PER_FILE = 2
+DEFAULT_MAX_CHUNKS = 12
 
 
 class VectorRepository(Protocol):
@@ -16,7 +20,11 @@ class VectorRepository(Protocol):
     def get_chunks(self, file_id: int) -> list[FileChunk]: ...
     def delete_chunks(self, file_id: int) -> None: ...
     def search_similar(
-        self, embedding: list[float], chat_id: int, top_k: int = 4
+        self,
+        embedding: list[float],
+        chat_id: int,
+        chunks_per_file: int = DEFAULT_CHUNKS_PER_FILE,
+        max_chunks: int = DEFAULT_MAX_CHUNKS,
     ) -> list[FileChunk]: ...
 
 
@@ -59,33 +67,54 @@ class VectorRepositorySQLAlchemy:
         self.session.commit()
 
     def search_similar(
-        self, embedding: list[float], chat_id: int, top_k: int = 4
+        self,
+        embedding: list[float],
+        chat_id: int,
+        chunks_per_file: int = DEFAULT_CHUNKS_PER_FILE,
+        max_chunks: int = DEFAULT_MAX_CHUNKS,
     ) -> list[FileChunk]:
-        """Busca os chunks mais similares (cosine) dos arquivos do chat."""
-        if self.session.get_bind().dialect.name == "sqlite":
-            from einstein_test.vector.similarity import cosine_similarity_search
+        """Busca os chunks mais similares por arquivo do chat.
 
-            rows = (
-                select(FileChunk)
-                .join(File, File.id == FileChunk.file_id)
-                .where(
-                    File.chat_id == chat_id,
-                    File.deleted_at.is_(None),
-                )
-            )
-            return cosine_similarity_search(
-                query=embedding,
-                rows=list(self.session.scalars(rows)),
-                top_k=top_k,
-            )
-        stmt = (
+        PostgreSQL: janela ROW_NUMBER particionada por file_id, limitando a
+        `chunks_per_file` por arquivo, reordenada por similaridade e truncada
+        em `max_chunks`. SQLite: fallback em Python (mesma semântica).
+        """
+        base = (
             select(FileChunk)
             .join(File, File.id == FileChunk.file_id)
             .where(
                 File.chat_id == chat_id,
                 File.deleted_at.is_(None),
             )
-            .order_by(FileChunk.embedding.cosine_distance(embedding))
-            .limit(top_k)
+        )
+        if self.session.get_bind().dialect.name == "sqlite":
+            from einstein_test.vector.similarity import per_file_top_k_search
+
+            return per_file_top_k_search(
+                query=embedding,
+                rows=list(self.session.scalars(base)),
+                chunks_per_file=chunks_per_file,
+                max_chunks=max_chunks,
+            )
+        distance = FileChunk.embedding.cosine_distance(embedding)
+        rn = func.row_number().over(
+            partition_by=FileChunk.file_id,
+            order_by=distance,
+        ).label("rn")
+        sub = (
+            select(FileChunk, rn)
+            .join(File, File.id == FileChunk.file_id)
+            .where(
+                File.chat_id == chat_id,
+                File.deleted_at.is_(None),
+            )
+            .subquery()
+        )
+        stmt = (
+            select(FileChunk)
+            .select_from(sub)
+            .where(sub.c.rn <= chunks_per_file)
+            .order_by(sub.c.embedding.cosine_distance(embedding))
+            .limit(max_chunks)
         )
         return list(self.session.scalars(stmt))

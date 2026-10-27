@@ -20,7 +20,8 @@ from einstein_test.vector.repository import VectorRepository
 
 logger = logging.getLogger(__name__)
 
-TOP_K = 4
+CHUNKS_PER_FILE = 2
+MAX_CHUNKS = 12
 DEFAULT_CHAT_MODEL = "azure/gpt-5-mini"
 DEFAULT_BASE_URL = "https://spillway.ensinoeinstein.com/openai/v1"
 
@@ -112,7 +113,10 @@ def build_graph(
         chat_id = state["chat_id"]
         embedding = embedder.embed([question])[0]
         chunks = retriever.search_similar(
-            embedding=embedding, chat_id=chat_id, top_k=TOP_K
+            embedding=embedding,
+            chat_id=chat_id,
+            chunks_per_file=CHUNKS_PER_FILE,
+            max_chunks=MAX_CHUNKS,
         )
         return {"chunks": chunks or []}
 

@@ -14,8 +14,8 @@ class _FakeVectorRepo:
     def __init__(self, chunks):
         self._chunks = chunks
 
-    def search_similar(self, embedding, chat_id, top_k=4):
-        return cosine_similarity_search(embedding, self._chunks, top_k=top_k)
+    def search_similar(self, embedding, chat_id, chunks_per_file=2, max_chunks=12):
+        return cosine_similarity_search(embedding, self._chunks, top_k=max_chunks)
 
 
 def _chunk(content, file_id=1):
