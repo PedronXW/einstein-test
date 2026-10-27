@@ -2,11 +2,12 @@
 
 import json
 import logging
-from collections.abc import Iterator
+from collections.abc import AsyncIterator
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
+from starlette.concurrency import run_in_threadpool
 
 from einstein_test.api.auth import get_current_user
 from einstein_test.api.dependencies import get_session
@@ -51,47 +52,62 @@ def _sse_event(data: str, *, event: str | None = None) -> str:
 
 
 @router.post("/chats/{chat_id}/messages")
-def create_message(
+async def create_message(
     chat_id: int,
     payload: MessageCreate,
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ) -> StreamingResponse:
     try:
-        _ensure_chat_owned(session, chat_id, current_user.id)
+        await run_in_threadpool(_ensure_chat_owned, session, chat_id, current_user.id)
     except ChatNotFoundError:
         raise HTTPException(status_code=404, detail="chat não encontrado") from None
     message_service = _message_service(session)
-    user_message = message_service.create_message(
-        chat_id=chat_id, content=payload.content, role="user"
-    )
 
-    def _history() -> list[str]:
-        return [
-            m.content
-            for m in message_service.list_messages(chat_id=chat_id)
-            if m.id != user_message.id
-        ][-MAX_HISTORY:]
+    async def _setup() -> object:
+        return await run_in_threadpool(
+            message_service.create_message,
+            chat_id=chat_id,
+            content=payload.content,
+            role="user",
+        )
 
-    def _stream() -> Iterator[str]:
+    user_message = await _setup()
+
+    async def _history() -> list[str]:
+        def _load() -> list[str]:
+            return [
+                m.content
+                for m in message_service.list_messages(chat_id=chat_id)
+                if m.id != user_message.id
+            ][-MAX_HISTORY:]
+
+        return await run_in_threadpool(_load)
+
+    async def _stream() -> AsyncIterator[str]:
         collected: list[str] = []
         try:
-            rag = _rag_service(session)
-            for token in rag.stream(
+            history = await _history()
+            rag = await run_in_threadpool(_rag_service, session)
+            async for token in rag.astream(
                 question=user_message.content,
                 chat_id=chat_id,
-                history=_history(),
+                history=history,
             ):
                 collected.append(token)
                 yield _sse_event(token)
             answer = "".join(collected)
-            assistant = message_service.create_message(
-                chat_id=chat_id, content=answer, role="assistant"
+            assistant = await run_in_threadpool(
+                message_service.create_message,
+                chat_id=chat_id,
+                content=answer,
+                role="assistant",
             )
             yield _sse_event({"message_id": assistant.id})
             yield _sse_event("[DONE]")
-        except Exception:
-            logger.exception("falha ao gerar resposta RAG")
+        except Exception as exc:
+            # evita gravar conteúdo do prompt/dados dos arquivos nos logs
+            logger.error("falha no RAG (chat=%s): %s", chat_id, type(exc).__name__)
             yield _sse_event(
                 {"error": "falha ao gerar resposta"},
                 event="error",

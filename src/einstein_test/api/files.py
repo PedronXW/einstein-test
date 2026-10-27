@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from sqlalchemy.orm import Session
+from starlette.concurrency import run_in_threadpool
 
 from einstein_test.api.auth import get_current_user
 from einstein_test.api.dependencies import get_session
@@ -34,7 +35,7 @@ def _ensure_chat_owned(session: Session, chat_id: int, user_id: int) -> None:
 
 
 @router.post("/chats/{chat_id}/files", response_model=FileRead)
-def upload_file(
+async def upload_file(
     chat_id: int,
     file: UploadFile,
     session: Session = Depends(get_session),
@@ -44,20 +45,26 @@ def upload_file(
         _ensure_chat_owned(session, chat_id, current_user.id)
     except ChatNotFoundError:
         raise HTTPException(status_code=404, detail="chat não encontrado") from None
-    content = file.file.read(MAX_UPLOAD_SIZE + 1)
+    content = await file.read(MAX_UPLOAD_SIZE + 1)
     if len(content) > MAX_UPLOAD_SIZE:
         raise HTTPException(status_code=413, detail="arquivo muito grande")
+    name = file.filename or "arquivo"
+    content_type = file.content_type
     service = _file_service(session)
-    try:
-        file_ = service.create_file(
-            chat_id=chat_id,
-            name=file.filename or "arquivo",
-            content=content,
-            content_type=file.content_type,
-        )
-    except VectorizationError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from None
-    return FileRead.model_validate(file_)
+
+    def _create() -> FileRead:
+        try:
+            file_ = service.create_file(
+                chat_id=chat_id,
+                name=name,
+                content=content,
+                content_type=content_type,
+            )
+        except VectorizationError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from None
+        return FileRead.model_validate(file_)
+
+    return await run_in_threadpool(_create)
 
 
 @router.get("/chats/{chat_id}/files", response_model=list[FileRead])
