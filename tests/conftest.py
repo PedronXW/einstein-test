@@ -23,6 +23,15 @@ def _jwt_secret(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def _reset_rate_limiter():
+    """Zera o rate limiter em memória entre testes (evita contagem acumulada)."""
+    from einstein_test.middleware.rate_limit import RateLimiter
+
+    RateLimiter.reset()
+    yield
+
+
+@pytest.fixture(autouse=True)
 def _mock_enqueue(monkeypatch):
     """Mocka a fila de vetorização em todos os testes (sem Redis/Celery).
 
