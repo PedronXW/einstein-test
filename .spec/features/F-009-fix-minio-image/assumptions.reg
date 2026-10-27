@@ -1,0 +1,4 @@
+#id	tipo	status	texto
+A-001	A	confirmada	bucket einstein pasa a ser creado manualmente cuando necesario
+A-002	A	confirmada	demas infra (red, volumenes, postgres init) permanece
+A-003	A	confirmada	ankane/pgvector:latest puja OK (ya en cache); nota: es PostgreSQL 15.4 y requiere recrear el volumen pgdata si fue inicializado con PG 16

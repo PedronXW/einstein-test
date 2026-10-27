@@ -1,0 +1,5 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-001	docker-compose.yml mantiene minio (minio/minio:latest, healthcheck /minio/health/live, portas 9000:9000 y 9001:9001, volume minio-data, rede infra-net) y remueve minio-init (sin minio/mc, sin mc mb)	T-SPEC
+AC-002	U-001	docker compose config valido; las unicas imagenes del compose son ankane/pgvector y minio/minio (sin minio/mc ni minio-init)	T-SPEC
+AC-003	U-002	MinioStorage (boto3) mantiene default http://localhost:9000 (MinIO) sin cambio de storage	T-SPEC
+AC-004	U-003	servicio postgres usa ankane/pgvector:latest; extension vector disponible; init de banco de teste de F-001 preservado (volume docker-entrypoint-initdb.d + create-test-db.sh)	T-SPEC
