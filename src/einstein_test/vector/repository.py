@@ -2,9 +2,8 @@
 
 from typing import Any, Protocol
 
-from sqlalchemy import delete, insert, select
-from sqlalchemy import func
-from sqlalchemy.orm import Session
+from sqlalchemy import delete, func, insert, select
+from sqlalchemy.orm import Session, aliased
 
 from einstein_test.models.file import File
 from einstein_test.models.file_chunk import EMBEDDING_DIM, FileChunk
@@ -110,11 +109,11 @@ class VectorRepositorySQLAlchemy:
             )
             .subquery()
         )
+        aliased_chunk = aliased(FileChunk, sub)
         stmt = (
-            select(FileChunk)
-            .select_from(sub)
+            select(aliased_chunk)
             .where(sub.c.rn <= chunks_per_file)
-            .order_by(sub.c.embedding.cosine_distance(embedding))
+            .order_by(aliased_chunk.embedding.cosine_distance(embedding))
             .limit(max_chunks)
         )
         return list(self.session.scalars(stmt))
