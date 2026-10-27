@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from einstein_test.db.base import Base
 from einstein_test.models.chat import Chat
 from einstein_test.models.file import File
+from einstein_test.models.user import User
 from einstein_test.repositories import (
     ChatRepository,
     ChatRepositorySQLAlchemy,
@@ -25,6 +26,15 @@ def session():
     Base.metadata.create_all(engine)
     with Session(engine) as sess:
         yield sess
+
+
+def _user_id(session) -> int:
+    import uuid
+
+    user = User(email=f"user_{uuid.uuid4().hex[:10]}@b.com", password_hash="x")
+    session.add(user)
+    session.flush()
+    return user.id
 
 
 def test_ac004_protocols_defined():
@@ -44,27 +54,29 @@ def test_ac004_protocols_defined():
 
 
 def test_ac005_chat_crud(session):
+    uid = _user_id(session)
     repo = ChatRepositorySQLAlchemy(session)
-    chat = repo.create(name="Chat Teste", description="desc")
+    chat = repo.create(user_id=uid, name="Chat Teste", description="desc")
     assert chat.id is not None
     assert chat.name == "Chat Teste"
 
-    fetched = repo.get_by_id(chat.id)
+    fetched = repo.get_by_id(chat.id, user_id=uid)
     assert fetched is not None and fetched.id == chat.id
 
-    chats = repo.list()
+    chats = repo.list(user_id=uid)
     assert any(c.id == chat.id for c in chats)
 
     repo.delete(chat.id)
-    assert repo.get_by_id(chat.id) is None
+    assert repo.get_by_id(chat.id, user_id=uid) is None
     # soft delete: registro continua na tabela com deleted_at preenchido
     deleted = session.get(Chat, chat.id)
     assert deleted is not None and deleted.deleted_at is not None
 
 
 def test_ac005_file_crud(session):
+    uid = _user_id(session)
     chat_repo = ChatRepositorySQLAlchemy(session)
-    chat = chat_repo.create(name="Chat com file")
+    chat = chat_repo.create(user_id=uid, name="Chat com file")
     file_repo = FileRepositorySQLAlchemy(session)
 
     file_ = file_repo.create(
@@ -93,15 +105,16 @@ def test_ac005_file_crud(session):
 
 
 def test_ac005_defaults_and_missing_id(session):
+    uid = _user_id(session)
     chat_repo = ChatRepositorySQLAlchemy(session)
-    chat = chat_repo.create(name="Chat defaults")
+    chat = chat_repo.create(user_id=uid, name="Chat defaults")
     file_repo = FileRepositorySQLAlchemy(session)
 
     file_ = file_repo.create(chat_id=chat.id, name="min.txt", url="s3://b/min.txt")
     assert file_.size == 0, "size default 0"
     assert file_.type is None, "type default None"
 
-    assert chat_repo.get_by_id(999999) is None, "chat inexistente -> None"
+    assert chat_repo.get_by_id(999999, user_id=uid) is None, "chat inexistente -> None"
     assert file_repo.get_by_id(999999) is None, "file inexistente -> None"
     chat_repo.delete(999999)  # no-op sem erro
     file_repo.delete(999999)  # no-op sem erro

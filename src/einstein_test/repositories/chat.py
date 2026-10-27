@@ -10,35 +10,41 @@ from einstein_test.models.chat import Chat
 
 
 class ChatRepository(Protocol):
-    def create(self, name: str, description: str | None = None) -> Chat: ...
-    def get_by_id(self, chat_id: int) -> Chat | None: ...
-    def list(self) -> list[Chat]: ...
+    def create(
+        self, user_id: int, name: str, description: str | None = None
+    ) -> Chat: ...
+    def get_by_id(self, chat_id: int, user_id: int) -> Chat | None: ...
+    def list(self, user_id: int) -> list[Chat]: ...
     def delete(self, chat_id: int) -> None: ...
 
 
 class ChatRepositorySQLAlchemy:
-    """Implementação SQLAlchemy (soft delete)."""
+    """Implementação SQLAlchemy (soft delete; escopo por dono)."""
 
     def __init__(self, session: Session) -> None:
         self.session = session
 
-    def create(self, name: str, description: str | None = None) -> Chat:
-        chat = Chat(name=name, description=description)
+    def create(
+        self, user_id: int, name: str, description: str | None = None
+    ) -> Chat:
+        chat = Chat(user_id=user_id, name=name, description=description)
         self.session.add(chat)
         self.session.commit()
         self.session.refresh(chat)
         return chat
 
-    def get_by_id(self, chat_id: int) -> Chat | None:
+    def get_by_id(self, chat_id: int, user_id: int) -> Chat | None:
         stmt = select(Chat).where(
-            Chat.id == chat_id, Chat.deleted_at.is_(None)
+            Chat.id == chat_id,
+            Chat.user_id == user_id,
+            Chat.deleted_at.is_(None),
         )
         return self.session.scalar(stmt)
 
-    def list(self) -> list[Chat]:
+    def list(self, user_id: int) -> list[Chat]:
         stmt = (
             select(Chat)
-            .where(Chat.deleted_at.is_(None))
+            .where(Chat.user_id == user_id, Chat.deleted_at.is_(None))
             .order_by(Chat.created_at.desc())
         )
         return list(self.session.scalars(stmt))

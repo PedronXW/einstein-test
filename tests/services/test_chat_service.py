@@ -1,4 +1,4 @@
-"""Testes TDD da feature F-005 (ChatService).
+"""Testes TDD da feature F-005 (ChatService) — adaptado ao ownership (F-012).
 
 Valida AC-001 e AC-004/AC-005: service orquestra com repositório e trata
 chat inexistente; dependency get_session exposta e utilizável.
@@ -21,20 +21,27 @@ class _SentinelRepo:
         self._chats = chats or {}
         self._next_id = 1
 
-    def create(self, name, description=None):
-        chat = Chat(id=self._next_id, name=name, description=description)
+    def create(self, user_id, name, description=None):
+        chat = Chat(
+            id=self._next_id, user_id=user_id, name=name, description=description
+        )
         self._chats[self._next_id] = chat
         self._next_id += 1
         return chat
 
-    def get_by_id(self, chat_id):
+    def get_by_id(self, chat_id, user_id):
         chat = self._chats.get(chat_id)
-        if chat is not None and chat.deleted_at is not None:
+        if chat is None or chat.deleted_at is not None:
+            return None
+        if chat.user_id != user_id:
             return None
         return chat
 
-    def list(self):
-        return [c for c in self._chats.values() if c.deleted_at is None]
+    def list(self, user_id):
+        return [
+            c for c in self._chats.values()
+            if c.deleted_at is None and c.user_id == user_id
+        ]
 
     def delete(self, chat_id):
         chat = self._chats.get(chat_id)
@@ -42,6 +49,9 @@ class _SentinelRepo:
             from datetime import UTC, datetime
             chat.deleted_at = datetime.now(UTC)
         return None
+
+
+USER_ID = 7
 
 
 def test_ac001_service_created_with_protocol_repo():
@@ -54,32 +64,43 @@ def test_ac001_create_get_list_delete():
     repo = _SentinelRepo()
     service = ChatService(repo)
 
-    created = service.create_chat(name="Chat", description="d")
+    created = service.create_chat(USER_ID, name="Chat", description="d")
     assert created.id is not None and created.name == "Chat"
 
-    fetched = service.get_chat(created.id)
+    fetched = service.get_chat(created.id, USER_ID)
     assert fetched.name == "Chat"
 
-    assert len(service.list_chats()) == 1
+    assert len(service.list_chats(USER_ID)) == 1
 
-    service.delete_chat(created.id)
+    service.delete_chat(created.id, USER_ID)
     with pytest.raises(ChatNotFoundError):
-        service.get_chat(created.id)
-    assert service.list_chats() == []
+        service.get_chat(created.id, USER_ID)
+    assert service.list_chats(USER_ID) == []
+
+
+def test_ac001_chat_of_other_user_not_visible():
+    repo = _SentinelRepo()
+    service = ChatService(repo)
+    created = service.create_chat(USER_ID, name="Chat")
+    with pytest.raises(ChatNotFoundError):
+        service.get_chat(created.id, USER_ID + 1)
+    with pytest.raises(ChatNotFoundError):
+        service.delete_chat(created.id, USER_ID + 1)
+    assert service.list_chats(USER_ID + 1) == []
 
 
 def test_ac001_service_delete_unknown_raises():
     repo = _SentinelRepo()
     service = ChatService(repo)
     with pytest.raises(ChatNotFoundError):
-        service.delete_chat(999999)
+        service.delete_chat(999999, USER_ID)
 
 
 def test_ac001_service_get_unknown_raises():
     repo = _SentinelRepo()
     service = ChatService(repo)
     with pytest.raises(ChatNotFoundError):
-        service.get_chat(999999)
+        service.get_chat(999999, USER_ID)
 
 
 def test_ac004_get_session_yields_valid_session():
@@ -88,25 +109,13 @@ def test_ac004_get_session_yields_valid_session():
     engine = create_engine("sqlite:///:memory:")
     Base.metadata.create_all(engine)
     configure_session_factory(engine)
+
     gen = get_session()
     session = next(gen)
     assert isinstance(session, Session)
-    gen.close()
-    with pytest.raises(StopIteration):
-        next(gen)  # generator encerrou -> finally: session.close() rodou
-
-
-def test_ac004_repository_works_against_sqlite():
-    from einstein_test.api.dependencies import configure_session_factory, get_session
-
-    engine = create_engine("sqlite:///:memory:")
-    Base.metadata.create_all(engine)
-    configure_session_factory(engine)
-    gen = get_session()
-    session = next(gen)
 
     repo = ChatRepositorySQLAlchemy(session)
-    chat = repo.create(name="Chat DB")
+    chat = repo.create(user_id=USER_ID, name="Chat DB")
     assert chat.id is not None
 
     gen.close()
