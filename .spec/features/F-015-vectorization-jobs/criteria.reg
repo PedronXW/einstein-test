@@ -1,0 +1,8 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-001	File ganha status (pending|ready|error, default pending) e error_detail (nullable) — migration; FileRead expoe ambos	T-SPEC
+AC-002	U-001	POST /chats/{chat_id}/files enfileira task Celery e retorna 202 com status=pending; limite 413/422 permanece; vetorizacao fora do request	T-SPEC
+AC-003	U-002	GET /files/{id} e lista refletem status atualizado (ready com chunk_ids, error com error_detail)	T-SPEC
+AC-004	U-003	Celery app com task vectorize_file(file_id): baixa conteudo do storage (Storage.download novo no Protocol/MinIO/InMemory), vetoriza e atualiza status; testavel sem broker (task_name.apply)	T-SPEC
+AC-005	U-003	erro na task -> status=error + error_detail (mensagem generica, sem vazar internals)	T-SPEC
+AC-006	U-004	Redis no docker-compose (broker/backend); deps celery e redis; celery_app carregavel	T-SPEC
+AC-007	U-002	testes: upload -> 202 pending; worker executa vetorizacao (mock em vez de broker) -> ready com chunks; falha -> error; ownership preservado	T-SPEC

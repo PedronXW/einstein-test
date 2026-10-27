@@ -1,0 +1,6 @@
+#id	tipo	status	texto
+A-001	A	confirmada	Upload responde 202 + File(status=pending) e enfileira Celery
+A-002	A	confirmada	Coluna status (pending/ready/error) + error_detail (nullable)
+A-003	A	confirmada	Celery + Redis (broker/backend) no compose; deps celery, redis
+A-004	A	confirmada	Storage.download adicionado (worker baixa o conteudo)
+A-005	A	confirmada	Task vectorize_file(file_id) atualiza status; testavel sem broker

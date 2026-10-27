@@ -1,0 +1,8 @@
+#AC-id	comando-teste	T-id	status	sha	strict
+AC-001	uv run pytest tests/models/test_file_status.py -q	T-SPEC	proven	ca3aa42	0
+AC-002	uv run pytest tests/api/test_file_jobs.py -q -k 'ac002'	T-SPEC	proven	ca3aa42	0
+AC-003	uv run pytest tests/api/test_file_jobs.py -q -k 'ac003'	T-SPEC	proven	ca3aa42	0
+AC-004	uv run pytest tests/tasks/test_vectorize_task.py -q -k 'ac004'	T-SPEC	proven	ca3aa42	0
+AC-005	uv run pytest tests/tasks/test_vectorize_task.py -q -k 'ac005'	T-SPEC	proven	ca3aa42	0
+AC-006	uv run pytest tests/tasks/test_vectorize_task.py tests/infra/test_celery_app.py -q	T-SPEC	proven	ca3aa42	0
+AC-007	uv run pytest tests/api/test_file_jobs.py tests/tasks/test_vectorize_task.py -q	T-SPEC	proven	ca3aa42	0
