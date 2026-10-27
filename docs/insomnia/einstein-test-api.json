@@ -1,0 +1,409 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_source": "opencode:spec",
+  "__export_date": "2026-10-26T00:00:00.000Z",
+  "resources": [
+    {
+      "_id": "wrk_einstein",
+      "type": "workspace",
+      "_type": "workspace",
+      "name": "einstein-test API"
+    },
+    {
+      "_id": "grp_auth",
+      "parentId": "wrk_einstein",
+      "type": "request_group",
+      "_type": "request_group",
+      "name": "Auth (F-012)"
+    },
+    {
+      "_id": "req_users_create",
+      "parentId": "grp_auth",
+      "type": "request",
+      "_type": "request",
+      "name": "POST /users — Registro",
+      "method": "POST",
+      "url": "{{ base_url }}/users",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"senha123\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "id": "hdr_users_ct"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 100
+    },
+    {
+      "_id": "req_auth_login",
+      "parentId": "grp_auth",
+      "type": "request",
+      "_type": "request",
+      "name": "POST /auth/login — Login (JWT)",
+      "method": "POST",
+      "url": "{{ base_url }}/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"senha123\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "id": "hdr_login_ct"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 200,
+      "_description": "Retorna `{access_token, token_type}`. Copie o valor de `access_token` para a variável de ambiente `auth_token`."
+    },
+    {
+      "_id": "env_base",
+      "parentId": "wrk_einstein",
+      "type": "environment",
+      "_type": "environment",
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://localhost:8000",
+        "chat_id": "1",
+        "message_id": "1",
+        "file_id": "1",
+        "file_path": "C:/caminho/para/arquivo.txt",
+        "auth_token": ""
+      },
+      "dataPropertyOrder": {
+        "&": [
+          "base_url",
+          "chat_id",
+          "message_id",
+          "file_id",
+          "file_path",
+          "auth_token"
+        ]
+      }
+    },
+    {
+      "_id": "grp_hello",
+      "parentId": "wrk_einstein",
+      "type": "request_group",
+      "_type": "request_group",
+      "name": "Health / Hello"
+    },
+    {
+      "_id": "req_hello",
+      "parentId": "grp_hello",
+      "type": "request",
+      "_type": "request",
+      "name": "GET / — Hello World",
+      "method": "GET",
+      "url": "{{ base_url }}/",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -1
+    },
+    {
+      "_id": "grp_chats",
+      "parentId": "wrk_einstein",
+      "type": "request_group",
+      "_type": "request_group",
+      "name": "Chats"
+    },
+    {
+      "_id": "req_chats_list",
+      "parentId": "grp_chats",
+      "type": "request",
+      "_type": "request",
+      "name": "GET /chats — Listar chats",
+      "method": "GET",
+      "url": "{{ base_url }}/chats",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ auth_token }}",
+          "id": "hdr_auth_req_chats_list"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 100
+    },
+    {
+      "_id": "req_chats_create",
+      "parentId": "grp_chats",
+      "type": "request",
+      "_type": "request",
+      "name": "POST /chats — Criar chat",
+      "method": "POST",
+      "url": "{{ base_url }}/chats",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Meu chat\",\n  \"description\": \"Descrição opcional\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "id": "hdr_chats_create"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ auth_token }}",
+          "id": "hdr_auth_req_chats_create"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 101
+    },
+    {
+      "_id": "req_chats_get",
+      "parentId": "grp_chats",
+      "type": "request",
+      "_type": "request",
+      "name": "GET /chats/:chat_id — Buscar chat",
+      "method": "GET",
+      "url": "{{ base_url }}/chats/{{ chat_id }}",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ auth_token }}",
+          "id": "hdr_auth_req_chats_get"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 102
+    },
+    {
+      "_id": "req_chats_delete",
+      "parentId": "grp_chats",
+      "type": "request",
+      "_type": "request",
+      "name": "DELETE /chats/:chat_id — Deletar chat (soft)",
+      "method": "DELETE",
+      "url": "{{ base_url }}/chats/{{ chat_id }}",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ auth_token }}",
+          "id": "hdr_auth_req_chats_delete"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 103
+    },
+    {
+      "_id": "grp_messages",
+      "parentId": "wrk_einstein",
+      "type": "request_group",
+      "_type": "request_group",
+      "name": "Messages"
+    },
+    {
+      "_id": "req_messages_list",
+      "parentId": "grp_messages",
+      "type": "request",
+      "_type": "request",
+      "name": "GET /chats/:chat_id/messages — Listar mensagens do chat",
+      "method": "GET",
+      "url": "{{ base_url }}/chats/{{ chat_id }}/messages",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ auth_token }}",
+          "id": "hdr_auth_req_messages_list"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 200
+    },
+    {
+      "_id": "req_messages_create",
+      "parentId": "grp_messages",
+      "type": "request",
+      "_type": "request",
+      "name": "POST /chats/:chat_id/messages — Perguntar (RAG streaming SSE)",
+      "method": "POST",
+      "url": "{{ base_url }}/chats/{{ chat_id }}/messages",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"content\": \"Sobre o que falam os arquivos deste chat?\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "id": "hdr_messages_create"
+        },
+        {
+          "name": "Accept",
+          "value": "text/event-stream",
+          "id": "hdr_messages_create_sse"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ auth_token }}",
+          "id": "hdr_auth_req_messages_create"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 201,
+      "_description": "Cria a mensagem (role=user) e responde via **RAG** (LangGraph) com **streaming SSE** (F-011). Endpoints são protegidos por **rate limiting** (F-016): exceder o limite → `429` com `Retry-After`.\n\nEventos: `data: \"<token>\"` … `data: {\"message_id\": <id>}` `data: \"[DONE]\"`; erro → `event: error`."
+    },
+    {
+      "_id": "req_messages_get",
+      "parentId": "grp_messages",
+      "type": "request",
+      "_type": "request",
+      "name": "GET /messages/:message_id — Buscar mensagem",
+      "method": "GET",
+      "url": "{{ base_url }}/messages/{{ message_id }}",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ auth_token }}",
+          "id": "hdr_auth_req_messages_get"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 202
+    },
+    {
+      "_id": "req_messages_delete",
+      "parentId": "grp_messages",
+      "type": "request",
+      "_type": "request",
+      "name": "DELETE /messages/:message_id — Deletar mensagem (soft)",
+      "method": "DELETE",
+      "url": "{{ base_url }}/messages/{{ message_id }}",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ auth_token }}",
+          "id": "hdr_auth_req_messages_delete"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 203
+    },
+    {
+      "_id": "grp_files",
+      "parentId": "wrk_einstein",
+      "type": "request_group",
+      "_type": "request_group",
+      "name": "Files"
+    },
+    {
+      "_id": "req_files_list",
+      "parentId": "grp_files",
+      "type": "request",
+      "_type": "request",
+      "name": "GET /chats/:chat_id/files — Listar arquivos do chat",
+      "method": "GET",
+      "url": "{{ base_url }}/chats/{{ chat_id }}/files",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ auth_token }}",
+          "id": "hdr_auth_req_files_list"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 300
+    },
+    {
+      "_id": "req_files_upload",
+      "parentId": "grp_files",
+      "type": "request",
+      "_type": "request",
+      "name": "POST /chats/:chat_id/files — Upload (202, vetorização em background)",
+      "method": "POST",
+      "url": "{{ base_url }}/chats/{{ chat_id }}/files",
+      "body": {
+        "mimeType": "multipart/form-data",
+        "parameters": [
+          {
+            "name": "file",
+            "value": "{{ file_path }}",
+            "fileName": "{{ file_path }}",
+            "type": "file",
+            "id": "file_upload_param"
+          }
+        ]
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ auth_token }}",
+          "id": "hdr_auth_req_files_upload"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 301,
+      "_description": "Faz upload de um arquivo. Retorna **202** com `status=pending`; a vetorização roda em **background** (Celery/Redis, F-015). Consulte `GET /files/:file_id` para ver `status: pending|ready|error`.\n\n**Observação**: `file_path` deve apontar para um arquivo real no seu computador."
+    },
+    {
+      "_id": "req_files_get",
+      "parentId": "grp_files",
+      "type": "request",
+      "_type": "request",
+      "name": "GET /files/:file_id — Buscar arquivo",
+      "method": "GET",
+      "url": "{{ base_url }}/files/{{ file_id }}",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ auth_token }}",
+          "id": "hdr_auth_req_files_get"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 302
+    },
+    {
+      "_id": "req_files_delete",
+      "parentId": "grp_files",
+      "type": "request",
+      "_type": "request",
+      "name": "DELETE /files/:file_id — Deletar arquivo (soft)",
+      "method": "DELETE",
+      "url": "{{ base_url }}/files/{{ file_id }}",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ auth_token }}",
+          "id": "hdr_auth_req_files_delete"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 303
+    }
+  ]
+}
