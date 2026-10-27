@@ -118,7 +118,7 @@ def test_ac005_service_persists_vectors(service):
     chunks = vec.get_chunks(file_.id)
     assert len(chunks) > 1, "texto longo gera múltiplos chunks vetorizados"
     assert chunks[0]["embedding"], "chunk guarda embedding"
-    assert len(chunks[0]["embedding"]) == 1024, "embedding de 1024 dims"
+    assert len(chunks[0]["embedding"]) == 1536, "embedding de 1536 dims"
 
 
 def test_ac005_service_chunk_ids_match_saved(service):
@@ -165,7 +165,7 @@ def test_ac008_sqlalchemy_vector_repo_integration():
         vrepo = VectorRepositorySQLAlchemy(session)
         ids = vrepo.insert_chunks(
             file_.id,
-            [{"index": 0, "content": "c", "embedding": [0.5] * 1024}],
+            [{"index": 0, "content": "c", "embedding": [0.5] * 1536}],
         )
         got = vrepo.get_chunks(file_.id)
         assert [c.id for c in got] == ids

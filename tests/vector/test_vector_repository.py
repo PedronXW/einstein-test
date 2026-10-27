@@ -82,4 +82,4 @@ def test_ac004_insert_chunks_returns_ids_saved(repo):
 def test_ac004_embedding_dimension_declared():
     col = FileChunk.__table__.c.embedding
     dim = getattr(col.type, "dim", None)
-    assert dim == 1024, "embedding é vector(1024)"
+    assert dim == 1536, "embedding é vector(1536)"

@@ -17,7 +17,7 @@ class TextExtractor:
 
     def _extract_text(self, content: bytes) -> str:
         try:
-            return content.decode("utf-8")
+            return self._sanitize(content.decode("utf-8"))
         except UnicodeDecodeError:
             return ""
 
@@ -26,6 +26,12 @@ class TextExtractor:
             from pypdf import PdfReader
 
             reader = PdfReader(io.BytesIO(content))
-            return "\n".join(page.extract_text() or "" for page in reader.pages)
+            text = "\n".join(page.extract_text() or "" for page in reader.pages)
+            return self._sanitize(text)
         except Exception:
             return ""
+
+    @staticmethod
+    def _sanitize(text: str) -> str:
+        """Remove bytes NUL (proibidos pelo PostgreSQL em colunas text)."""
+        return text.replace("\x00", "")

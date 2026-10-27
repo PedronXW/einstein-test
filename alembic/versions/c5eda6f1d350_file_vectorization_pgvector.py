@@ -28,7 +28,7 @@ def upgrade() -> None:
     sa.Column('file_id', sa.Integer(), nullable=False),
     sa.Column('chunk_index', sa.Integer(), nullable=False),
     sa.Column('content', sa.Text(), nullable=False),
-    sa.Column('embedding', pgvector.sqlalchemy.vector.VECTOR(dim=1024), nullable=False),
+    sa.Column('embedding', pgvector.sqlalchemy.vector.VECTOR(dim=1536), nullable=False),
     sa.ForeignKeyConstraint(['file_id'], ['files.id'], ),
     sa.PrimaryKeyConstraint('id')
     )

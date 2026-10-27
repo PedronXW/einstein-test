@@ -6,7 +6,7 @@ from pgvector.sqlalchemy import Vector
 
 from einstein_test.db.base import Base
 
-EMBEDDING_DIM = 1024
+EMBEDDING_DIM = 1536
 
 
 class FileChunk(Base):

@@ -8,7 +8,7 @@ from typing import Protocol
 from dotenv import load_dotenv
 
 DEFAULT_MODEL = "cohere/embed-v4.0"
-DEFAULT_DIM = 1024
+DEFAULT_DIM = 1536
 DEFAULT_BASE_URL = "https://spillway.ensinoeinstein.com/openai/v1"
 
 

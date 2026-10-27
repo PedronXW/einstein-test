@@ -19,6 +19,13 @@ def test_ac002_extractor_md():
     assert "# Titulo\ncorpo" in text
 
 
+def test_ac002_extractor_strips_nul_bytes():
+    ex = TextExtractor()
+    text = ex.extract("nota.txt", b"ola\x00mundo")
+    assert text == "olamundo", "bytes NUL removidos do texto"
+    assert "\x00" not in text
+
+
 def test_ac002_extractor_unknown_type_returns_empty():
     ex = TextExtractor()
     assert ex.extract("img.png", b"xxxx") == ""

@@ -1,7 +1,7 @@
 """Testes TDD da feature F-010 (AC-007: migration pgvector + file_chunks).
 
 Valida que a migration Alembic cria a extensão vector, a tabela file_chunks
-com embedding vector(1024) e as colunas novas em files (chunk_ids,
+com embedding vector(1536) e as colunas novas em files (chunk_ids,
 vector_reference).
 """
 
@@ -50,7 +50,7 @@ def test_ac007_migration_creates_file_chunks(alembic_env: dict[str, str]) -> Non
     )
 
 
-def test_ac007_migration_vector_1024(alembic_env: dict[str, str]) -> None:
+def test_ac007_migration_vector_1536(alembic_env: dict[str, str]) -> None:
     proc = subprocess.run(
         ["uv", "run", "alembic", "upgrade", "head", "--sql"],
         cwd=ROOT,
@@ -59,7 +59,7 @@ def test_ac007_migration_vector_1024(alembic_env: dict[str, str]) -> None:
         text=True,
     )
     assert proc.returncode == 0, proc.stdout + proc.stderr
-    assert "vector(1024)" in proc.stdout.lower(), "coluna embedding é vector(1024)"
+    assert "vector(1536)" in proc.stdout.lower(), "coluna embedding é vector(1536)"
 
 
 def test_ac007_migration_alters_files(alembic_env: dict[str, str]) -> None:

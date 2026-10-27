@@ -1,7 +1,7 @@
 """Testes TDD da feature F-010 (AC-001: Embedder).
 
 Valida o Protocol Embedder, o OpenAIEmbedder (config via .env/OPENAI_*,
-model cohere/embed-v4.0, base url OpenAI-compatível, dim 1024) e o
+model cohere/embed-v4.0, base url OpenAI-compatível, dim 1536) e o
 FakeEmbedder determinístico.
 """
 
@@ -16,7 +16,7 @@ def test_ac001_embedder_is_protocol():
 
 def test_ac001_openai_embedder_model_and_dim():
     assert OpenAIEmbedder.model == "cohere/embed-v4.0"
-    assert OpenAIEmbedder.dim == 1024
+    assert OpenAIEmbedder.dim == 1536
 
 
 def test_ac001_openai_embedder_base_url_default():
@@ -32,10 +32,13 @@ def test_ac001_openai_embedder_reads_env(monkeypatch):
     assert emb.api_key == "sk-test"
     assert emb.model == "cohere/embed-v4.0"
     assert emb.base_url == "https://spillway.ensinoeinstein.com/openai/v1"
-    assert emb.dim == 1024
+    assert emb.dim == 1536
 
 
 def test_ac001_openai_embedder_requires_api_key(monkeypatch):
+    import einstein_test.vector.embedder as embedder_module
+
+    monkeypatch.setattr(embedder_module, "load_dotenv", lambda: None)
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     with pytest.raises(RuntimeError):
         OpenAIEmbedder()
@@ -47,7 +50,7 @@ def test_ac001_fake_embedder_deterministic():
     b = emb.embed(["olá mundo"])
     assert a == b, "FakeEmbedder determinístico para o mesmo texto"
     assert len(a) == 1
-    assert len(a[0]) == 1024, "vetor de 1024 dims (cohere/embed-v4.0)"
+    assert len(a[0]) == 1536, "vetor de 1536 dims (cohere/embed-v4.0)"
 
 
 def test_ac001_fake_embedder_distinct_texts():
@@ -61,7 +64,7 @@ def test_ac001_fake_embedder_batch():
     emb = FakeEmbedder()
     vecs = emb.embed(["a", "b", "c"])
     assert len(vecs) == 3
-    assert all(len(v) == 1024 for v in vecs)
+    assert all(len(v) == 1536 for v in vecs)
 
 
 def test_ac001_fake_embedder_dims_are_floats():
