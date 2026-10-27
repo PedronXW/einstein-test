@@ -1,0 +1,6 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-001	configure_logging() aplica JSON formatter (ts, level, logger, msg, request_id) ao root+app loggers; STDOUT; LOG_LEVEL default INFO; chamado no entrypoint do app e do worker	T-SPEC
+AC-002	U-002	RequestIdMiddleware gera request_id (UUID) por request, injeta X-Request-Id na resposta e faz access log estruturado (method, path, status, latency_ms, user_id, ip); registrado no create_app antes do rate limit	T-SPEC
+AC-003	U-002	logs do mesmo request dentro de services/endpoints carregam request_id (logging.Filter + contextvar)	T-SPEC
+AC-004	U-003	logs estruturados em enqueue_vectorization (file_id, status), messages.py RAG (chat_id, n_tokens, error) e tasks/vectorize_file (attempt, status) sem conteudo de prompt/arquivo	T-SPEC
+AC-005	U-001	testes: JSON parseavel no handler; middleware propaga X-Request-Id e access log tem request_id/status/latency; logs do RAG nao contem texto da pergunta nem chunks; get_logger funcional	T-SPEC

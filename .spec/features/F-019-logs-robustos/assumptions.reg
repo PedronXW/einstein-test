@@ -1,0 +1,5 @@
+#id	tipo	status	texto
+A-001	A	confirmada	Logs JSON estruturado no STDOUT (parsáveis), LOG_LEVEL via env
+A-002	A	confirmada	Middleware RequestID + access log + header X-Request-Id
+A-003	A	confirmada	request_id propagado via logging.Filter + contextvar
+A-004	A	confirmada	Nunca logar conteúdo de prompt/arquivos (só ids/contagens)
