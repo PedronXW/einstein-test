@@ -1,0 +1,5 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-001	pacote app/ movido para src/einstein_test/ (api, db, models, repositories, schemas, services, storage, main.py) e diretorio app/ removido	T-SPEC
+AC-002	U-001	todos os imports de app. reescritos para einstein_test. em src/, tests/ e alembic/ sem nenhuma referencia restante a app.	T-SPEC
+AC-003	U-002	uv resolve o package einstein_test a partir de src/ sem o erro de modulo esperado e pyproject com entrypoint coerente (einstein_test:...)	T-SPEC
+AC-004	U-002	uv run pytest verde apos migracao; alembic upgrade head --sql offline executa com novo import; uvicorn einstein_test.main:app carrega	T-SPEC

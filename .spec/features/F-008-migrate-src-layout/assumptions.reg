@@ -1,0 +1,3 @@
+#id	tipo	status	texto
+A-001	A	confirmada	src-layout padrao do uv_build: src/einstein_test/
+A-002	A	confirmada	entrypoint de script do pyproject passa a usar einstein_test.main ou e removido

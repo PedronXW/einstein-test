@@ -1,0 +1,5 @@
+#AC-id	comando-teste	T-id	status	sha	strict
+AC-001	test ! -d app && test -d src/einstein_test && test -f src/einstein_test/main.py	T-SPEC	proven	5cb96b6	0
+AC-002	! grep -rnE 'from app.|import app.' src tests alembic	T-SPEC	proven	5cb96b6	0
+AC-003	uv run python -c 'import einstein_test, einstein_test.main; print(einstein_test.__file__)' | grep -q 'src/einstein_test'	T-SPEC	proven	5cb96b6	0
+AC-004	uv run pytest -q && uv run alembic upgrade head --sql 2>/dev/null >/dev/null && uv run python -c 'from einstein_test.main import app; print(app.title)'	T-SPEC	proven	5cb96b6	0
