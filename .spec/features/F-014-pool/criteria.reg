@@ -1,0 +1,5 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-001	create_engine_from_config(url=None) -> Engine com pool_size=env.DATABASE_POOL_SIZE (10), max_overflow=env.DATABASE_MAX_OVERFLOW (20), pool_timeout=env.DATABASE_POOL_TIMEOUT (30), pool_pre_ping=True; get_session usa a factory	T-SPEC
+AC-002	U-002	configure_session_factory aceita engine ou url; criacao do engine centralizada na factory unica; get_session nao cria engine inline	T-SPEC
+AC-003	U-003	pool_pre_ping=True e pool_timeout definidos no engine; documentado em .env.example	T-SPEC
+AC-004	U-004	teste: factory cria engine com parametros de pool corretos (engine.pool.size()/max_overflow); teste de concorrencia N=20 sessoes paralelas (threads) executando query simples sem erro	T-SPEC

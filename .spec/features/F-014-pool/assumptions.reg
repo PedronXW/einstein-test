@@ -1,0 +1,5 @@
+#id	tipo	status	texto
+A-001	A	confirmada	pool_size=10, max_overflow=20, pool_timeout=30, pool_pre_ping=True
+A-002	A	confirmada	Config via env vars com defaults (DATABASE_POOL_SIZE, DATABASE_MAX_OVERFLOW, DATABASE_POOL_TIMEOUT)
+A-003	A	confirmada	Factory unica create_engine_from_config reutilizada por get_session/configure_session_factory
+A-004	A	confirmada	Teste de concorrencia com N=20 sessoes paralelas
