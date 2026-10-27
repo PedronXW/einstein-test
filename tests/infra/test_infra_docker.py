@@ -1,4 +1,4 @@
-"""Testes TDD da feature F-001 (infra local: postgres + minio via docker compose).
+"""Testes TDD das features F-001/F-009 (infra local: postgres pgvector + minio).
 
 Cada teste valida um critério de aceite (AC-*) usando `docker compose config`
 (docker 29.x / compose v5) como fonte de verdade normalizada, além de asserts
@@ -54,10 +54,10 @@ def cfg() -> str:
     return compose_config()
 
 
-# AC-001 — serviço postgres -------------------------------------------------
+# AC-001 — serviço postgres (pgvector, F-009) --------------------------------
 def test_ac001_postgres(cfg: str) -> None:
     block = service_block(cfg, "postgres")
-    assert "postgres:16-alpine" in block, "imagem postgres:16-alpine"
+    assert "ankane/pgvector" in block, "imagem postgres vetorizado ankane/pgvector"
     assert "pg_isready" in block, "healthcheck pg_isready"
     assert "5432" in block, "porta 5432 publicada"
 
@@ -104,17 +104,31 @@ def test_ac003_test_db_init(cfg: str) -> None:
     )
 
 
-# AC-004 — bucket inicial via minio-init -------------------------------------
-def test_ac004_minio_init(cfg: str) -> None:
-    block = service_block(cfg, "minio-init")
-    assert "minio/mc" in block, "servico minio-init com imagem minio/mc"
-    assert "mc mb" in block, "minio-init deve rodar mc mb"
-    assert "einstein" in block, "bucket padrao einstein"
+# AC-004 — postgres vetorizado (F-009) ---------------------------------------
+def test_ac004_pgvector_image(cfg: str) -> None:
+    block = service_block(cfg, "postgres")
+    assert "ankane/pgvector" in block, "imagem pgvector (ankane/pgvector:latest)"
 
 
-def test_ac004_minio_init_depends(cfg: str) -> None:
-    block = service_block(cfg, "minio-init")
-    assert "service_healthy" in block, "minio-init deve aguardar minio saudavel"
+def test_ac004_pgvector_init_preserved(cfg: str) -> None:
+    block = service_block(cfg, "postgres")
+    assert "docker-entrypoint-initdb.d" in block, (
+        "init do banco de teste preservado (F-001)"
+    )
+    assert (INITDB_DIR / "create-test-db.sh").exists(), (
+        "create-test-db.sh ainda presente"
+    )
+
+
+# AC-001 (F-009) — sem inicialização automática de bucket --------------------
+def test_ac001_no_minio_init_service(cfg: str) -> None:
+    assert "minio-init" not in cfg, "servico minio-init removido"
+    assert "minio/mc" not in cfg, "imagem minio/mc removida"
+
+
+def test_ac001_minio_still_present(cfg: str) -> None:
+    block = service_block(cfg, "minio")
+    assert "minio/minio" in block, "MinIO mantido como storage local"
 
 
 # AC-005 — config válido + network dedicada ----------------------------------
@@ -129,7 +143,16 @@ def test_ac005_network_declared(cfg: str) -> None:
 
 
 def test_ac005_isolated_from_default(cfg: str) -> None:
-    for svc in ("postgres", "minio", "minio-init"):
+    for svc in ("postgres", "minio"):
         block = service_block(cfg, svc)
         assert "infra-net" in block, f"{svc} na rede infra-net"
         assert "default" not in block, f"{svc} nao deve estar na rede default"
+
+
+def test_ac002_imagens_compose(cfg: str) -> None:
+    import re
+
+    images = set(re.findall(r"^\s{4}image:\s*(\S+)", cfg, re.MULTILINE))
+    assert images == {"ankane/pgvector:latest", "minio/minio:latest"}, (
+        "únicas imagens: ankane/pgvector + minio/minio"
+    )

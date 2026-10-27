@@ -72,7 +72,7 @@ def test_ac004_env_py_executa_offline(alembic_env: dict[str, str]) -> None:
 
 def test_ac004_compose_has_postgres() -> None:
     content = read(COMPOSE)
-    assert "postgres:16-alpine" in content, "postgres no compose"
+    assert "ankane/pgvector" in content, "postgres vetorizado no compose (F-009)"
 
 
 def test_ac005_base_declarativa() -> None:

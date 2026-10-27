@@ -2,7 +2,7 @@ name: einstein-test
 
 services:
   postgres:
-    image: postgres:16-alpine
+    image: ankane/pgvector:latest
     environment:
       POSTGRES_USER: einstein
       POSTGRES_PASSWORD: einstein
@@ -40,23 +40,6 @@ services:
       retries: 5
       start_period: 10s
     restart: unless-stopped
-    networks:
-      - infra-net
-
-  minio-init:
-    image: minio/mc:latest
-    depends_on:
-      minio:
-        condition: service_healthy
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
-    entrypoint: >
-      /bin/sh -c "
-      mc alias set local http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD} &&
-      mc mb --ignore-existing local/einstein
-      "
-    restart: on-failure
     networks:
       - infra-net
 

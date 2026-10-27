@@ -155,6 +155,26 @@ def test_ac003_minio_storage_configured():
     assert MinioStorage.bucket == "einstein", "bucket default do compose F-001"
 
 
+def test_ac003_minio_storage_default_endpoint(monkeypatch):
+    monkeypatch.delenv("MINIO_ENDPOINT", raising=False)
+    sentinel = []
+
+    class _FakeS3:
+        def __init__(self, *args, **kwargs):
+            sentinel.append(kwargs)
+            self.put_object = lambda **kw: None
+            self.delete_object = lambda **kw: None
+
+    import boto3
+
+    monkeypatch.setattr(boto3, "client", _FakeS3)
+    MinioStorage()
+    kwargs = sentinel[0]
+    assert kwargs["endpoint_url"] == "http://localhost:9000", (
+        "MinioStorage default aponta para o MinIO local (porta 9000)"
+    )
+
+
 def test_ac003_inmemory_storage_roundtrip():
     storage = InMemoryStorage()
     url = storage.upload("einstein", "path/x.txt", b"data")
