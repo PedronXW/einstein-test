@@ -20,6 +20,7 @@ class UserRead(BaseModel):
 
     id: int
     email: str
+    model: str | None = None
     created_at: datetime
 
 

@@ -15,5 +15,6 @@ class User(TimestampMixin, Base):
         String(255), nullable=False, unique=True, index=True
     )
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    model: Mapped[str | None] = mapped_column(String(127), nullable=True)
 
     chats: Mapped[list["Chat"]] = relationship(back_populates="owner")

@@ -18,7 +18,7 @@ from einstein_test.repositories.message import MessageRepositorySQLAlchemy
 from einstein_test.schemas.message import MessageCreate, MessageRead
 from einstein_test.services.chat import ChatNotFoundError, ChatService
 from einstein_test.services.message import MessageNotFoundError, MessageService
-from einstein_test.services.rag import RagService, get_rag_service
+from einstein_test.services.rag import RagService, allowed_models, get_rag_service
 
 logger = get_logger("api.messages")
 
@@ -35,8 +35,8 @@ def _message_service(session: Session) -> MessageService:
     return MessageService(MessageRepositorySQLAlchemy(session))
 
 
-def _rag_service(session: Session) -> RagService:
-    return get_rag_service(VectorRepositorySQLAlchemy(session))
+def _rag_service(session: Session, model: str | None = None) -> RagService:
+    return get_rag_service(VectorRepositorySQLAlchemy(session), model=model)
 
 
 def _ensure_chat_owned(session: Session, chat_id: int, user_id: int) -> None:
@@ -59,6 +59,10 @@ async def create_message(
     current_user: User = Depends(get_current_user),
 ) -> StreamingResponse:
     request_id = current_request_id()
+    if current_user.model is not None and current_user.model not in allowed_models():
+        # allowlist re-validada em call-time (defense in depth): se o modelo
+        # armazenado saiu da allowlist, usa o default do ambiente.
+        current_user.model = None
     try:
         await run_in_threadpool(_ensure_chat_owned, session, chat_id, current_user.id)
     except ChatNotFoundError:
@@ -89,7 +93,7 @@ async def create_message(
         collected: list[str] = []
         try:
             history = await _history()
-            rag = await run_in_threadpool(_rag_service, session)
+            rag = await run_in_threadpool(_rag_service, session, current_user.model)
             n_tokens = 0
             async for token in rag.astream(
                 question=user_message.content,

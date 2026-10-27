@@ -35,6 +35,21 @@ DEFAULT_BASE_URL = "https://spillway.ensinoeinstein.com/openai/v1"
 LLM_MAX_RETRIES = int(os.getenv("LLM_MAX_RETRIES", "2"))
 LLM_RETRY_BACKOFF = float(os.getenv("LLM_RETRY_BACKOFF", "1"))
 
+DEFAULT_ALLOWED_MODELS = "azure/gpt-5-mini,azure/gpt-6-luna"
+
+
+def allowed_models() -> list[str]:
+    """Modelos de LLM permitidos, lidos do env `ALLOWED_MODELS`.
+
+    Env ausente ou vazia → usa o default (os 2 modelos). Lê o `.env` quando
+    existir (consistente com o adapter).
+    """
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    raw = os.getenv("ALLOWED_MODELS") or DEFAULT_ALLOWED_MODELS
+    return [m.strip() for m in raw.split(",") if m.strip()]
+
 
 class RagState(TypedDict, total=False):
     question: str
@@ -361,27 +376,26 @@ class RagService:
 
 
 _rag_factory: Callable[..., RagService] | None = None
-_shared_llm: ChatOpenAIAdapter | None = None
 _shared_embedder: Embedder | None = None
 
 
-def get_rag_service(retriever: VectorRepository) -> RagService:
+def get_rag_service(
+    retriever: VectorRepository, *, model: str | None = None
+) -> RagService:
     """Retorna o serviço RAG para o retriever da sessão atual.
 
-    O `ChatOpenAIAdapter`/`Embedder` são compartilhados entre requests
-    (singleton), evitando recriar o client HTTP por request. O `RagService` e o
-    retriever (session-based) são criados por request — a session do SQLAlchemy
-    é por-request e não pode ser cacheada entre requests.
+    O `ChatOpenAIAdapter` é criado **por usuário** com o `model` escolhido (ou
+    o default do ambiente quando `model` é None) — não há mais singleton do
+    LLM. O `Embedder` permanece compartilhado (client HTTP de embeddings).
     """
-    global _shared_llm, _shared_embedder
+    global _shared_embedder
     if _rag_factory is not None:
-        return _rag_factory(retriever=retriever)
-    if _shared_llm is None:
-        _shared_llm = ChatOpenAIAdapter()
+        kwargs = {"model": model} if model is not None else {}
+        return _rag_factory(retriever=retriever, **kwargs)
     if _shared_embedder is None:
         _shared_embedder = get_embedder()
     return RagService(
-        llm=_shared_llm,
+        llm=ChatOpenAIAdapter(model=model),
         retriever=retriever,
         embedder=_shared_embedder,
     )
@@ -395,8 +409,7 @@ def set_rag_factory(factory: Callable[..., RagService]) -> None:
 def reset_rag_factory() -> None:
     global _rag_factory
     _rag_factory = None
-    global _shared_llm, _shared_embedder
-    _shared_llm = None
+    global _shared_embedder
     _shared_embedder = None
 
 
@@ -411,4 +424,5 @@ __all__ = [
     "get_rag_service",
     "set_rag_factory",
     "reset_rag_factory",
+    "allowed_models",
 ]
