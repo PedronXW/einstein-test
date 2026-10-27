@@ -18,12 +18,12 @@ migration gerada/executada ainda.
 
 ## Veredito mecânico
 `specs proof --strict F-002-fastapi-alembic` → `PASS` (5/5 ACs). `specs gate` → `PASS`.
-Validação viva: `uvicorn app.main:app` → `GET /` `200` `{"message":"Hello World"}`;
+Validação viva: `uvicorn einstein_test.main:app` → `GET /` `200` `{"message":"Hello World"}`;
 `alembic check` com postgres do compose → `No new upgrade operations detected` (exit 0).
 
 ## Como usar
 ```sh
-uv run uvicorn app.main:app --reload   # sobe a API em http://127.0.0.1:8000
+uv run uvicorn einstein_test.main:app --reload   # sobe a API em http://127.0.0.1:8000
 docker compose up -d postgres          # postgres para o Alembic
 uv run alembic current                 # conecta e mostra revisão atual (nenhuma ainda)
 export DATABASE_URL="postgresql://einstein:einstein@localhost:5432/einstein"
