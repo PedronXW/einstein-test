@@ -15,6 +15,12 @@ from collections.abc import AsyncIterator, Iterator
 from typing import Any, Callable, Protocol, TypedDict
 
 from langgraph.graph import StateGraph
+from tenacity import (
+    AsyncRetrying,
+    retry_if_exception,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 from einstein_test.vector import Embedder, get_embedder
 from einstein_test.vector.repository import VectorRepository
@@ -25,6 +31,9 @@ CHUNKS_PER_FILE = 2
 MAX_CHUNKS = 12
 DEFAULT_CHAT_MODEL = "azure/gpt-5-mini"
 DEFAULT_BASE_URL = "https://spillway.ensinoeinstein.com/openai/v1"
+
+LLM_MAX_RETRIES = int(os.getenv("LLM_MAX_RETRIES", "2"))
+LLM_RETRY_BACKOFF = float(os.getenv("LLM_RETRY_BACKOFF", "1"))
 
 
 class RagState(TypedDict, total=False):
@@ -55,6 +64,31 @@ class FakeChatLLM:
             yield token
 
 
+def _is_transient(exc: BaseException) -> bool:
+    """Exceções re-tentáveis (rede/storage/timeout/provedor temporário)."""
+    return isinstance(exc, (ConnectionError, TimeoutError, OSError))
+
+
+def _retrying():
+    return AsyncRetrying(
+        stop=stop_after_attempt(LLM_MAX_RETRIES),
+        wait=wait_exponential(multiplier=LLM_RETRY_BACKOFF, min=0.05, max=5),
+        retry=retry_if_exception(_is_transient),
+        reraise=True,
+    )
+
+
+def _retrying_sync():
+    from tenacity import Retrying
+
+    return Retrying(
+        stop=stop_after_attempt(LLM_MAX_RETRIES),
+        wait=wait_exponential(multiplier=LLM_RETRY_BACKOFF, min=0.05, max=5),
+        retry=retry_if_exception(_is_transient),
+        reraise=True,
+    )
+
+
 class ChatOpenAIAdapter:
     """ChatLLM real via langchain-openai ChatOpenAI (azure/gpt-5-mini)."""
 
@@ -82,10 +116,39 @@ class ChatOpenAIAdapter:
         )
 
     def stream(self, prompt: str) -> Iterator[str]:
-        yield from (c.content or "" for c in self._llm.stream(prompt))
+        # retry transiente na aquisição do 1º token (não depois)
+        it = iter(self._llm.stream(prompt))
+        while True:
+            try:
+                first = next(it)
+                break
+            except StopIteration:
+                return
+            except Exception as exc:  # noqa: BLE001
+                if not _is_transient(exc):
+                    raise
+                for attempt in _retrying_sync():
+                    with attempt:
+                        it = iter(self._llm.stream(prompt))
+                        first = next(it)
+                break
+        yield (first.content or "")
+        for c in it:
+            yield (c.content or "")
 
     async def astream(self, prompt: str) -> AsyncIterator[str]:
-        async for chunk in self._llm.astream(prompt):
+        # retry transiente apenas ANTES do primeiro token
+        it: Any = None
+        first: Any = None
+        try:
+            async for attempt in _retrying():
+                with attempt:
+                    it = self._llm.astream(prompt).__aiter__()
+                    first = await it.__anext__()
+        except StopAsyncIteration:
+            return
+        yield (getattr(first, "content", None) or "")
+        async for chunk in it:
             yield (getattr(chunk, "content", None) or "")
 
 
@@ -210,6 +273,21 @@ class RagService:
         self.embedder: Embedder = embedder or get_embedder()
         self._graph = None
         self._graph_async = None
+
+    def _embed_question(self, question: str) -> list[float]:
+        """Gera o embedding da pergunta com retry transiente (tenacity)."""
+        from tenacity import Retrying
+
+        retrying = Retrying(
+            stop=stop_after_attempt(LLM_MAX_RETRIES),
+            wait=wait_exponential(multiplier=LLM_RETRY_BACKOFF, min=0.05, max=5),
+            retry=retry_if_exception(_is_transient),
+            reraise=True,
+        )
+        for attempt in retrying:
+            with attempt:
+                return self.embedder.embed([question])[0]
+        raise RuntimeError("embedding falhou após retries")
 
     @property
     def graph(self) -> Any:
