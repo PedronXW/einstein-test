@@ -138,8 +138,9 @@ def test_ac006_rag_service_singleton_reused(client, monkeypatch):
 
     svc1 = get_rag_service(_Repo())
     svc2 = get_rag_service(_Repo())
-    # adapter/embedder compartilhados (singleton), RagService/retriever por request
-    assert svc1.llm is svc2.llm, "ChatOpenAIAdapter compartilhado (singleton)"
+    # F-022: ChatOpenAIAdapter é por request (model do usuário) — NÃO singleton;
+    # embedder permanece compartilhado para evitar recriar client de embeddings.
+    assert svc1.llm is not svc2.llm, "adapter por usuário (model efetivo)"
     assert svc1.embedder is svc2.embedder, "Embedder compartilhado"
     assert svc1 is not svc2, "RagService é por request"
     assert svc1.retriever is not svc2.retriever, "retriever é por request (session)"
