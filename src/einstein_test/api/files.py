@@ -1,13 +1,12 @@
 """Endpoints REST de file."""
 
-import logging
-
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
 from einstein_test.api.auth import get_current_user
 from einstein_test.api.dependencies import get_session
+from einstein_test.logging_setup import get_logger
 from einstein_test.models import User
 from einstein_test.repositories.chat import ChatRepositorySQLAlchemy
 from einstein_test.repositories.file import FileRepositorySQLAlchemy
@@ -16,7 +15,7 @@ from einstein_test.services.chat import ChatNotFoundError, ChatService
 from einstein_test.services.file import FileNotFound, FileService
 from einstein_test.vector import VectorRepositorySQLAlchemy
 
-logger = logging.getLogger(__name__)
+logger = get_logger("api.files")
 
 router = APIRouter(tags=["files"])
 
@@ -44,8 +43,13 @@ def enqueue_vectorization(file_id: int) -> None:
         from einstein_test.tasks import vectorize_file
 
         vectorize_file.delay(file_id)
+        logger.info("vetorização enfileirada", extra={
+            "event": "vectorize_enqueue", "file_id": file_id, "status": "queued",
+        })
     except Exception:  # noqa: BLE001
-        logger.warning("falha ao enfileirar vetorização do file %s", file_id)
+        logger.warning("falha ao enfileirar vetorização", extra={
+            "event": "vectorize_enqueue_failed", "file_id": file_id,
+        })
 
 
 def _ensure_chat_owned(session: Session, chat_id: int, user_id: int) -> None:

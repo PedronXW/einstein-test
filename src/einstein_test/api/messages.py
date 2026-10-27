@@ -1,7 +1,6 @@
 """Endpoints REST de message."""
 
 import json
-import logging
 from collections.abc import AsyncIterator
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -11,6 +10,7 @@ from starlette.concurrency import run_in_threadpool
 
 from einstein_test.api.auth import get_current_user
 from einstein_test.api.dependencies import get_session
+from einstein_test.logging_setup import current_request_id, get_logger
 from einstein_test.models import User
 from einstein_test.repositories import VectorRepositorySQLAlchemy
 from einstein_test.repositories.chat import ChatRepositorySQLAlchemy
@@ -20,7 +20,7 @@ from einstein_test.services.chat import ChatNotFoundError, ChatService
 from einstein_test.services.message import MessageNotFoundError, MessageService
 from einstein_test.services.rag import RagService, get_rag_service
 
-logger = logging.getLogger(__name__)
+logger = get_logger("api.messages")
 
 router = APIRouter(tags=["messages"])
 
@@ -58,6 +58,7 @@ async def create_message(
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ) -> StreamingResponse:
+    request_id = current_request_id()
     try:
         await run_in_threadpool(_ensure_chat_owned, session, chat_id, current_user.id)
     except ChatNotFoundError:
@@ -89,12 +90,14 @@ async def create_message(
         try:
             history = await _history()
             rag = await run_in_threadpool(_rag_service, session)
+            n_tokens = 0
             async for token in rag.astream(
                 question=user_message.content,
                 chat_id=chat_id,
                 history=history,
             ):
                 collected.append(token)
+                n_tokens += 1
                 yield _sse_event(token)
             answer = "".join(collected)
             assistant = await run_in_threadpool(
@@ -103,11 +106,20 @@ async def create_message(
                 content=answer,
                 role="assistant",
             )
+            logger.info("RAG concluído", extra={
+                "event": "rag_done", "chat_id": chat_id,
+                "message_id": assistant.id, "n_tokens": n_tokens,
+                "request_id": request_id,
+            })
             yield _sse_event({"message_id": assistant.id})
             yield _sse_event("[DONE]")
         except Exception as exc:
             # evita gravar conteúdo do prompt/dados dos arquivos nos logs
-            logger.error("falha no RAG (chat=%s): %s", chat_id, type(exc).__name__)
+            logger.error("falha no RAG", extra={
+                "event": "rag_error", "chat_id": chat_id,
+                "error": type(exc).__name__,
+                "request_id": request_id,
+            })
             yield _sse_event(
                 {"error": "falha ao gerar resposta"},
                 event="error",

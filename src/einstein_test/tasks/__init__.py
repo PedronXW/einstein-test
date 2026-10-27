@@ -5,15 +5,15 @@
   (extrai→chunk→embed→insert) e atualiza o File (status ready/error).
 """
 
-import logging
 import os
 
 from celery import Celery
 
+from einstein_test.logging_setup import get_logger
 from einstein_test.models import File  # noqa: F401
 from einstein_test.models.file import FILE_STATUS_ERROR, FILE_STATUS_PENDING, FILE_STATUS_READY
 
-logger = logging.getLogger(__name__)
+logger = get_logger("tasks")
 
 celery_app = Celery(
     "einstein_test.tasks",
@@ -88,7 +88,10 @@ def vectorize_file(file_id: int) -> dict:
                 "chunks": len(chunk_ids),
             }
     except Exception as exc:  # noqa: BLE001
-        logger.warning("vetorização falhou (file_id=%s): %s", file_id, type(exc).__name__)
+        logger.warning("vetorização falhou", extra={
+            "event": "vectorize_failed", "file_id": file_id,
+            "error": type(exc).__name__,
+        })
         try:
             from sqlalchemy.orm import Session
 
@@ -99,9 +102,10 @@ def vectorize_file(file_id: int) -> dict:
                     file_.error_detail = str(exc.__class__.__name__)
                     session.commit()
         except Exception as inner:  # noqa: BLE001
-            logger.error(
-                "falha ao marcar erro (file_id=%s): %s", file_id, type(inner).__name__
-            )
+            logger.error("falha ao marcar erro", extra={
+                "event": "vectorize_mark_error_failed", "file_id": file_id,
+                "error": type(inner).__name__,
+            })
             if file_ is not None and file_.status != FILE_STATUS_READY:
                 pass
         return {"file_id": file_id, "status": FILE_STATUS_ERROR}
