@@ -1,5 +1,7 @@
 """Endpoints REST de file."""
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
@@ -11,8 +13,10 @@ from einstein_test.repositories.chat import ChatRepositorySQLAlchemy
 from einstein_test.repositories.file import FileRepositorySQLAlchemy
 from einstein_test.schemas.file import FileRead
 from einstein_test.services.chat import ChatNotFoundError, ChatService
-from einstein_test.services.file import FileNotFound, FileService, VectorizationError
+from einstein_test.services.file import FileNotFound, FileService
 from einstein_test.vector import VectorRepositorySQLAlchemy
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["files"])
 
@@ -26,15 +30,29 @@ def _chat_service(session: Session) -> ChatService:
 def _file_service(session: Session) -> FileService:
     return FileService(
         FileRepositorySQLAlchemy(session),
-        vector_repository=VectorRepositorySQLAlchemy(session),
+        vector_repository=None,  # vetorização agora roda em background (F-015)
     )
+
+
+def enqueue_vectorization(file_id: int) -> None:
+    """Enfileira a tarefa de vetorização no Celery (mockável nos testes).
+
+    Se o broker estiver indisponível, apenas registra no log — o upload já
+    retornou 202 com status=pending; uma re-dispatch manual pode reenfileirar.
+    """
+    try:
+        from einstein_test.tasks import vectorize_file
+
+        vectorize_file.delay(file_id)
+    except Exception:  # noqa: BLE001
+        logger.warning("falha ao enfileirar vetorização do file %s", file_id)
 
 
 def _ensure_chat_owned(session: Session, chat_id: int, user_id: int) -> None:
     _chat_service(session).get_chat(chat_id, user_id=user_id)
 
 
-@router.post("/chats/{chat_id}/files", response_model=FileRead)
+@router.post("/chats/{chat_id}/files", response_model=FileRead, status_code=202)
 async def upload_file(
     chat_id: int,
     file: UploadFile,
@@ -53,18 +71,18 @@ async def upload_file(
     service = _file_service(session)
 
     def _create() -> FileRead:
-        try:
-            file_ = service.create_file(
-                chat_id=chat_id,
-                name=name,
-                content=content,
-                content_type=content_type,
-            )
-        except VectorizationError as exc:
-            raise HTTPException(status_code=422, detail=str(exc)) from None
+        file_ = service.create_file(
+            chat_id=chat_id,
+            name=name,
+            content=content,
+            content_type=content_type,
+        )
         return FileRead.model_validate(file_)
 
-    return await run_in_threadpool(_create)
+    created = await run_in_threadpool(_create)
+    # vetorização em background
+    await run_in_threadpool(enqueue_vectorization, created.id)
+    return created
 
 
 @router.get("/chats/{chat_id}/files", response_model=list[FileRead])
@@ -103,7 +121,12 @@ def delete_file(
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ) -> dict[str, str]:
-    service = _file_service(session)
+    from einstein_test.vector import VectorRepositorySQLAlchemy as _V
+
+    service = FileService(
+        FileRepositorySQLAlchemy(session),
+        vector_repository=_V(session),
+    )
     try:
         file_ = service.get_file(file_id)
         _ensure_chat_owned(session, file_.chat_id, current_user.id)

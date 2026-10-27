@@ -17,5 +17,8 @@ class InMemoryStorage:
         self._objects[path] = content
         return f"s3://{bucket}/{path}"
 
+    def download(self, bucket: str, path: str) -> bytes:
+        return self._objects[path]
+
     def delete(self, bucket: str, path: str) -> None:
         self._objects.pop(path, None)

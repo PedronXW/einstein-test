@@ -8,6 +8,7 @@ BUCKET = "einstein"
 
 class Storage(Protocol):
     def upload(self, bucket: str, path: str, content: bytes) -> str: ...
+    def download(self, bucket: str, path: str) -> bytes: ...
     def delete(self, bucket: str, path: str) -> None: ...
 
 
@@ -48,6 +49,10 @@ class MinioStorage:
             ContentType=content_type or "application/octet-stream",
         )
         return f"s3://{bucket}/{path}"
+
+    def download(self, bucket: str, path: str) -> bytes:
+        response = self._s3.get_object(Bucket=bucket, Key=path)
+        return response["Body"].read()
 
     def delete(self, bucket: str, path: str) -> None:
         self._s3.delete_object(Bucket=bucket, Key=path)

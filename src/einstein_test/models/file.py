@@ -9,6 +9,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from einstein_test.db.base import Base
 from einstein_test.models.mixin import TimestampMixin
 
+FILE_STATUS_PENDING = "pending"
+FILE_STATUS_READY = "ready"
+FILE_STATUS_ERROR = "error"
+
 
 class File(TimestampMixin, Base):
     __tablename__ = "files"
@@ -29,6 +33,13 @@ class File(TimestampMixin, Base):
     )
     vector_reference: Mapped[str | None] = mapped_column(
         String(36), nullable=True, default=lambda: str(uuid.uuid4())
+    )
+    status: Mapped[str] = mapped_column(
+        String(16), nullable=False, default=FILE_STATUS_PENDING,
+        server_default=text("'pending'"),
+    )
+    error_detail: Mapped[str | None] = mapped_column(
+        String(1024), nullable=True
     )
 
     chat: Mapped["Chat"] = relationship(back_populates="files")

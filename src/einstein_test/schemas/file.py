@@ -16,4 +16,6 @@ class FileRead(BaseModel):
     size: int = Field(ge=0)
     chunk_ids: list[int] = Field(default_factory=list)
     vector_reference: str | None = None
+    status: str = "pending"
+    error_detail: str | None = None
     created_at: datetime
