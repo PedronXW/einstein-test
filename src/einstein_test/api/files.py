@@ -3,12 +3,12 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_session
-from app.repositories.chat import ChatRepositorySQLAlchemy
-from app.repositories.file import FileRepositorySQLAlchemy
-from app.schemas.file import FileRead
-from app.services.chat import ChatNotFoundError, ChatService
-from app.services.file import FileNotFound, FileService
+from einstein_test.api.dependencies import get_session
+from einstein_test.repositories.chat import ChatRepositorySQLAlchemy
+from einstein_test.repositories.file import FileRepositorySQLAlchemy
+from einstein_test.schemas.file import FileRead
+from einstein_test.services.chat import ChatNotFoundError, ChatService
+from einstein_test.services.file import FileNotFound, FileService
 
 router = APIRouter(tags=["files"])
 

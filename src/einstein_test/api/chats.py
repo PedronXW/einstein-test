@@ -3,10 +3,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_session
-from app.repositories.sqlalchemy import ChatRepositorySQLAlchemy
-from app.schemas.chat import ChatCreate, ChatRead
-from app.services.chat import ChatNotFoundError, ChatService
+from einstein_test.api.dependencies import get_session
+from einstein_test.repositories.sqlalchemy import ChatRepositorySQLAlchemy
+from einstein_test.schemas.chat import ChatCreate, ChatRead
+from einstein_test.services.chat import ChatNotFoundError, ChatService
 
 router = APIRouter(prefix="/chats", tags=["chats"])
 

@@ -8,10 +8,10 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from app.db.base import Base
-from app.models.chat import Chat
-from app.models.file import File
-from app.repositories import (
+from einstein_test.db.base import Base
+from einstein_test.models.chat import Chat
+from einstein_test.models.file import File
+from einstein_test.repositories import (
     ChatRepository,
     ChatRepositorySQLAlchemy,
     FileRepository,

@@ -6,7 +6,7 @@ Valida AC-001/AC-002: app FastAPI com GET / retornando hello world.
 import pytest
 from fastapi.testclient import TestClient
 
-from app.main import create_app
+from einstein_test.main import create_app
 
 
 @pytest.fixture

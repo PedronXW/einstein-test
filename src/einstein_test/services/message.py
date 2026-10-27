@@ -1,7 +1,7 @@
 """Serviço de Message — orquestra CRUD sobre o repositório."""
 
-from app.models.message import Message
-from app.repositories import MessageRepository
+from einstein_test.models.message import Message
+from einstein_test.repositories import MessageRepository
 
 
 class MessageNotFoundError(LookupError):

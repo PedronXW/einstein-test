@@ -8,8 +8,8 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.pool import StaticPool
 
-from app.db.base import Base
-from app.main import create_app
+from einstein_test.db.base import Base
+from einstein_test.main import create_app
 
 
 @pytest.fixture
@@ -21,7 +21,7 @@ def client():
     )
     Base.metadata.create_all(engine)
 
-    from app.api.dependencies import configure_session_factory
+    from einstein_test.api.dependencies import configure_session_factory
 
     configure_session_factory(engine)
 

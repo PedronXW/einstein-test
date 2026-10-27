@@ -1,7 +1,7 @@
 """Storage da aplicação (object storage)."""
 
-from app.storage.inmemory import InMemoryStorage
-from app.storage.minio import MinioStorage, Storage
+from einstein_test.storage.inmemory import InMemoryStorage
+from einstein_test.storage.minio import MinioStorage, Storage
 
 _storage: Storage | None = None
 

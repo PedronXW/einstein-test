@@ -4,9 +4,9 @@ import re
 import uuid
 from pathlib import PurePath
 
-from app.models.file import File
-from app.repositories import FileRepository
-from app.storage import Storage, get_storage
+from einstein_test.models.file import File
+from einstein_test.repositories import FileRepository
+from einstein_test.storage import Storage, get_storage
 
 SAFE_NAME_PATTERN = re.compile(r"^[\w.\- ]{1,255}$")
 

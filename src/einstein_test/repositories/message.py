@@ -6,7 +6,7 @@ from typing import Protocol
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models.message import Message
+from einstein_test.models.message import Message
 
 
 class MessageRepository(Protocol):

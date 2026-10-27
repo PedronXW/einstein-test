@@ -1,8 +1,8 @@
 """Repositórios de aplicação."""
 
-from app.repositories.chat import ChatRepository, ChatRepositorySQLAlchemy
-from app.repositories.file import FileRepository, FileRepositorySQLAlchemy
-from app.repositories.message import (
+from einstein_test.repositories.chat import ChatRepository, ChatRepositorySQLAlchemy
+from einstein_test.repositories.file import FileRepository, FileRepositorySQLAlchemy
+from einstein_test.repositories.message import (
     MessageRepository,
     MessageRepositorySQLAlchemy,
 )

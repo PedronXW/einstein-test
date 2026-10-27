@@ -8,10 +8,10 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from app.db.base import Base
-from app.models.chat import Chat
-from app.repositories import ChatRepository, ChatRepositorySQLAlchemy
-from app.services.chat import ChatNotFoundError, ChatService
+from einstein_test.db.base import Base
+from einstein_test.models.chat import Chat
+from einstein_test.repositories import ChatRepository, ChatRepositorySQLAlchemy
+from einstein_test.services.chat import ChatNotFoundError, ChatService
 
 
 class _SentinelRepo:
@@ -83,7 +83,7 @@ def test_ac001_service_get_unknown_raises():
 
 
 def test_ac004_get_session_yields_valid_session():
-    from app.api.dependencies import configure_session_factory, get_session
+    from einstein_test.api.dependencies import configure_session_factory, get_session
 
     engine = create_engine("sqlite:///:memory:")
     Base.metadata.create_all(engine)
@@ -97,7 +97,7 @@ def test_ac004_get_session_yields_valid_session():
 
 
 def test_ac004_repository_works_against_sqlite():
-    from app.api.dependencies import configure_session_factory, get_session
+    from einstein_test.api.dependencies import configure_session_factory, get_session
 
     engine = create_engine("sqlite:///:memory:")
     Base.metadata.create_all(engine)
@@ -117,7 +117,7 @@ def test_ac004_session_dependency_default_engine():
     """get_session() não exige argumentos de request (assinatura sem obrigatórios)."""
     import inspect
 
-    from app.api.dependencies import get_session
+    from einstein_test.api.dependencies import get_session
 
     sig = inspect.signature(get_session)
     required = [

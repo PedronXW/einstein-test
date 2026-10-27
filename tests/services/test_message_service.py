@@ -10,10 +10,10 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from app.db.base import Base
-from app.models.message import Message
-from app.repositories import MessageRepository, MessageRepositorySQLAlchemy
-from app.services.message import MessageNotFoundError, MessageService
+from einstein_test.db.base import Base
+from einstein_test.models.message import Message
+from einstein_test.repositories import MessageRepository, MessageRepositorySQLAlchemy
+from einstein_test.services.message import MessageNotFoundError, MessageService
 
 
 class _FakeMessageRepository:

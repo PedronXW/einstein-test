@@ -11,8 +11,8 @@ import tomllib
 
 import pytest
 
-from app.db.base import Base
-from app.models import Chat, File, Message  # noqa: F401  (registra as tabelas)
+from einstein_test.db.base import Base
+from einstein_test.models import Chat, File, Message  # noqa: F401  (registra as tabelas)
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 COMPOSE = ROOT / "docker-compose.yml"

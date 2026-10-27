@@ -1,6 +1,6 @@
 """Implementação in-memory de Storage (testes)."""
 
-from app.storage.minio import Storage
+from einstein_test.storage.minio import Storage
 
 
 class InMemoryStorage:

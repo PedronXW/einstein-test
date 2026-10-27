@@ -6,7 +6,7 @@ from typing import Protocol
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models.chat import Chat
+from einstein_test.models.chat import Chat
 
 
 class ChatRepository(Protocol):

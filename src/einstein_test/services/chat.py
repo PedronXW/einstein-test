@@ -1,7 +1,7 @@
 """Serviço de Chat — orquestra CRUD sobre o repositório."""
 
-from app.models.chat import Chat
-from app.repositories import ChatRepository
+from einstein_test.models.chat import Chat
+from einstein_test.repositories import ChatRepository
 
 
 class ChatNotFoundError(LookupError):

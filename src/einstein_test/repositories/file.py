@@ -6,7 +6,7 @@ from typing import Protocol
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models.file import File
+from einstein_test.models.file import File
 
 
 class FileRepository(Protocol):

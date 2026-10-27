@@ -10,9 +10,9 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.pool import StaticPool
 
-from app.db.base import Base
-from app.main import create_app
-from app.storage import InMemoryStorage
+from einstein_test.db.base import Base
+from einstein_test.main import create_app
+from einstein_test.storage import InMemoryStorage
 
 
 @pytest.fixture
@@ -24,8 +24,8 @@ def client():
     )
     Base.metadata.create_all(engine)
 
-    from app.api.dependencies import configure_session_factory
-    from app.storage import set_storage
+    from einstein_test.api.dependencies import configure_session_factory
+    from einstein_test.storage import set_storage
 
     configure_session_factory(engine)
     set_storage(InMemoryStorage())
@@ -124,7 +124,7 @@ def test_ac005_soft_deleted_chat_404(client):
 
 
 def test_ac004_upload_sanitizes_traversal_name(client):
-    from app.storage import get_storage
+    from einstein_test.storage import get_storage
 
     chat = _create_chat(client)
     resp = _upload(client, chat["id"], name="../../etc/passwd", content=b"x")
@@ -143,7 +143,7 @@ def test_ac004_upload_over_limit_413(client):
 
 
 def test_ac004_delete_removes_object(client):
-    from app.storage import get_storage
+    from einstein_test.storage import get_storage
 
     chat = _create_chat(client)
     created = _upload(client, chat["id"], name="limpar.txt", content=b"d").json()

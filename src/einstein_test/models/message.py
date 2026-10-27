@@ -3,8 +3,8 @@
 from sqlalchemy import ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.base import Base
-from app.models.mixin import TimestampMixin
+from einstein_test.db.base import Base
+from einstein_test.models.mixin import TimestampMixin
 
 
 class Message(TimestampMixin, Base):
