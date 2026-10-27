@@ -1,0 +1,9 @@
+#AC-id	comando-teste	T-id	status	sha	strict
+AC-001	uv run pytest tests/vector/test_search_similar.py -q	T-SPEC	proven	3904dc1	0
+AC-002	uv run pytest tests/services/test_rag_service.py -q -k ac002	T-SPEC	proven	3904dc1	0
+AC-003	uv run pytest tests/services/test_rag_service.py -q -k ac003	T-SPEC	proven	3904dc1	0
+AC-004	uv run pytest tests/api/test_message_rag.py -q -k ac004	T-SPEC	proven	3904dc1	0
+AC-005	uv run pytest tests/api/test_message_rag.py -q -k ac005	T-SPEC	proven	3904dc1	0
+AC-006	uv run pytest tests/services/test_rag_service.py -q -k 'ac006 or _build_prompt or _generate_answer'	T-SPEC	proven	3904dc1	0
+AC-007	uv run pytest tests/api/test_message_rag.py -q	T-SPEC	proven	3904dc1	0
+AC-008	uv run pytest tests/api/test_message_rag.py tests/vector/test_search_similar.py tests/services/test_rag_service.py -q	T-SPEC	proven	3904dc1	0

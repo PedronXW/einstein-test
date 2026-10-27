@@ -1,0 +1,9 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-002	VectorRepository.search_similar(embedding, chat_id, top_k=4) no Protocol + SQLAlchemy pgvector (cosine <=> com join File.chat_id); nos testes SQLite fake que calcula cosine em Python	T-SPEC
+AC-002	U-003	adicionar dependencias langgraph e langchain-openai; RagService/RagAssistant com build_graph(llm, retriever, history): StateGraph com nos retrieve e generate (ChatOpenAI azure/gpt-5-mini via base_url/api_key do .env)	T-SPEC
+AC-003	U-003	ChatLLM abstraido (Protocol) com stream(prompt) -> Iterator[str]; FakeChatLLM deterministico nos testes; ChatOpenAIAdapter real em producao (OPENAI_BASE_URL/OPENAI_API_KEY)	T-SPEC
+AC-004	U-001	POST /chats/{chat_id}/messages retorna text/event-stream: cria message user, executa grafo, emite data: <token> por token e data: [DONE] com message_id da resposta salva role=assistant	T-SPEC
+AC-005	U-001	erro do LLM/grafo durante streaming -> evento event: error com mensagem; nenhuma message assistant salva; message user permanece	T-SPEC
+AC-006	U-003	contexto do generate: chunks recuperados + pergunta atual + historico de messages anteriores do chat; top_k=4	T-SPEC
+AC-007	U-005	testes tests/api/test_message_rag.py com TestClient + LLM fake: pergunta -> SSE tokens do fake; [DONE] com id; resposta assistant persistida; erro do fake -> event: error sem salvar assistant	T-SPEC
+AC-008	U-001	documentacao do streaming (SSE) em docs/features/F-011-rag-langgraph.md	T-SPEC

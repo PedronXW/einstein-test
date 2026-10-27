@@ -1,0 +1,9 @@
+#id	tipo	status	texto
+A-001	A	confirmada	Busca vetorial pgvector cosine (<=>), top_k=4, filtrada por chat
+A-002	A	confirmada	POST /chats/{chat_id}/messages muda para SSE (breaking do F-006)
+A-003	A	confirmada	Ao criar message user, resposta assistant gerada e salva automaticamente
+A-004	A	confirmada	Streaming SSE: token por evento data: + [DONE] com id; erro -> event: error sem salvar
+A-005	A	confirmada	Contexto do generate: chunks + pergunta + historico do chat
+A-006	A	confirmada	LangGraph (StateGraph retrieve->generate) + langchain-openai ChatOpenAI
+A-007	A	confirmada	Modelo azure/gpt-5-mini, mesmo OPENAI_BASE_URL do .env (spillway)
+A-008	A	confirmada	Testes sem tokens: ChatLLM fake injetavel; busca fake em SQLite
