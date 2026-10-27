@@ -44,7 +44,7 @@ class FileRepositorySQLAlchemy:
     ) -> File:
         file_ = File(chat_id=chat_id, name=name, url=url, type=type, size=size)
         self.session.add(file_)
-        self.session.commit()
+        self.session.flush()
         self.session.refresh(file_)
         return file_
 
@@ -72,10 +72,10 @@ class FileRepositorySQLAlchemy:
         if file_ is not None:
             file_.chunk_ids = chunk_ids
             file_.vector_reference = vector_reference
-            self.session.commit()
+            self.session.flush()
 
     def delete(self, file_id: int) -> None:
         file_ = self.session.get(File, file_id)
         if file_ is not None:
             file_.deleted_at = datetime.now(UTC)
-            self.session.commit()
+            self.session.flush()

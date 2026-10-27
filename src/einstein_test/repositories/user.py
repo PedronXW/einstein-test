@@ -38,7 +38,7 @@ class UserRepositorySQLAlchemy:
     def create(self, email: str, password: str) -> User:
         user = User(email=email, password_hash=hash_password(password))
         self.session.add(user)
-        self.session.commit()
+        self.session.flush()
         self.session.refresh(user)
         return user
 

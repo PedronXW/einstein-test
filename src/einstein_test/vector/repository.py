@@ -50,7 +50,7 @@ class VectorRepositorySQLAlchemy:
         ]
         stmt = insert(FileChunk).returning(FileChunk.id)
         ids = [row[0] for row in self.session.execute(stmt, rows)]
-        self.session.commit()
+        self.session.flush()
         return ids
 
     def get_chunks(self, file_id: int) -> list[FileChunk]:
@@ -64,7 +64,7 @@ class VectorRepositorySQLAlchemy:
     def delete_chunks(self, file_id: int) -> None:
         stmt = delete(FileChunk).where(FileChunk.file_id == file_id)
         self.session.execute(stmt)
-        self.session.commit()
+        self.session.flush()
 
     def search_similar(
         self,

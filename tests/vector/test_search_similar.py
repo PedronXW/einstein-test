@@ -67,6 +67,7 @@ def _setup(engine):
                 {"index": 0, "content": "gorila de outro chat", "embedding": [0.99, 0.01, 0.0]},
             ],
         )
+        session.commit()
         return chat.id, chat2.id, f1.id, f2.id, f3.id
 
 

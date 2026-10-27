@@ -59,7 +59,7 @@ def configure_session_factory(bind: Engine | str) -> None:
 
 
 def get_session() -> Iterator[Session]:
-    """Cria uma Session por request; encerra ao final."""
+    """Cria uma Session por request; commit no fim e rollback em erro (UoW)."""
     global _SessionLocal
     if _SessionLocal is None:
         with _lock:
@@ -73,5 +73,10 @@ def get_session() -> Iterator[Session]:
     session = _SessionLocal()
     try:
         yield session
+    except Exception:
+        session.rollback()
+        raise
+    else:
+        session.commit()
     finally:
         session.close()

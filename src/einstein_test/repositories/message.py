@@ -29,7 +29,7 @@ class MessageRepositorySQLAlchemy:
     ) -> Message:
         message = Message(chat_id=chat_id, content=content, role=role)
         self.session.add(message)
-        self.session.commit()
+        self.session.flush()
         self.session.refresh(message)
         return message
 
@@ -54,4 +54,4 @@ class MessageRepositorySQLAlchemy:
         message = self.session.get(Message, message_id)
         if message is not None:
             message.deleted_at = datetime.now(UTC)
-            self.session.commit()
+            self.session.flush()
