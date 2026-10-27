@@ -1,16 +1,27 @@
 """Endpoints REST de message."""
 
+import json
+import logging
+from collections.abc import Iterator
+
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from einstein_test.api.dependencies import get_session
+from einstein_test.repositories import VectorRepositorySQLAlchemy
 from einstein_test.repositories.chat import ChatRepositorySQLAlchemy
 from einstein_test.repositories.message import MessageRepositorySQLAlchemy
 from einstein_test.schemas.message import MessageCreate, MessageRead
 from einstein_test.services.chat import ChatNotFoundError, ChatService
 from einstein_test.services.message import MessageNotFoundError, MessageService
+from einstein_test.services.rag import RagService, get_rag_service
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["messages"])
+
+MAX_HISTORY = 10
 
 
 def _chat_service(session: Session) -> ChatService:
@@ -21,6 +32,10 @@ def _message_service(session: Session) -> MessageService:
     return MessageService(MessageRepositorySQLAlchemy(session))
 
 
+def _rag_service(session: Session) -> RagService:
+    return get_rag_service(VectorRepositorySQLAlchemy(session))
+
+
 def _ensure_chat_exists(session: Session, chat_id: int) -> None:
     try:
         _chat_service(session).get_chat(chat_id)
@@ -28,18 +43,65 @@ def _ensure_chat_exists(session: Session, chat_id: int) -> None:
         raise HTTPException(status_code=404, detail="chat não encontrado") from None
 
 
-@router.post("/chats/{chat_id}/messages", response_model=MessageRead)
+def _sse_event(data: str, *, event: str | None = None) -> str:
+    """Formata um evento SSE (dados JSON-encoded; linhas normalizadas)."""
+    encoded = json.dumps(data, ensure_ascii=False)
+    if event:
+        return f"event: {event}\ndata: {encoded}\n\n"
+    return f"data: {encoded}\n\n"
+
+
+@router.post("/chats/{chat_id}/messages")
 def create_message(
     chat_id: int,
     payload: MessageCreate,
     session: Session = Depends(get_session),
-) -> MessageRead:
+) -> StreamingResponse:
     _ensure_chat_exists(session, chat_id)
-    service = _message_service(session)
-    message = service.create_message(
-        chat_id=chat_id, content=payload.content, role=payload.role
+    message_service = _message_service(session)
+    user_message = message_service.create_message(
+        chat_id=chat_id, content=payload.content, role="user"
     )
-    return MessageRead.model_validate(message)
+
+    def _history() -> list[str]:
+        return [
+            m.content
+            for m in message_service.list_messages(chat_id=chat_id)
+            if m.id != user_message.id
+        ][-MAX_HISTORY:]
+
+    def _stream() -> Iterator[str]:
+        collected: list[str] = []
+        try:
+            rag = _rag_service(session)
+            for token in rag.stream(
+                question=user_message.content,
+                chat_id=chat_id,
+                history=_history(),
+            ):
+                collected.append(token)
+                yield _sse_event(token)
+            answer = "".join(collected)
+            assistant = message_service.create_message(
+                chat_id=chat_id, content=answer, role="assistant"
+            )
+            yield _sse_event({"message_id": assistant.id})
+            yield _sse_event("[DONE]")
+        except Exception:
+            logger.exception("falha ao gerar resposta RAG")
+            yield _sse_event(
+                {"error": "falha ao gerar resposta"},
+                event="error",
+            )
+
+    return StreamingResponse(
+        _stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @router.get("/chats/{chat_id}/messages", response_model=list[MessageRead])

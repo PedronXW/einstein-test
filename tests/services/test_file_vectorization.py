@@ -68,6 +68,26 @@ class _FakeVectorRepository:
     def delete_chunks(self, file_id):
         self._chunks.pop(file_id, None)
 
+    def search_similar(self, embedding, chat_id, top_k=4):
+        from einstein_test.vector.similarity import cosine_similarity_search
+
+        rows = []
+        for file_id, chunks in self._chunks.items():
+            for c in chunks:
+                c = dict(c)
+                chunk = type(
+                    "Chunk",
+                    (),
+                    {
+                        "id": c["id"],
+                        "file_id": file_id,
+                        "content": c["content"],
+                        "embedding": c["embedding"],
+                    },
+                )
+                rows.append(chunk)
+        return cosine_similarity_search(embedding, rows, top_k=top_k)
+
 
 @pytest.fixture
 def service():
