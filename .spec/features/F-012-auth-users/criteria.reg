@@ -1,0 +1,9 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-001	Model User (id, email unico, password_hash, timestamp mixin) + migration; RepositoryUser (Protocol + SQLAlchemy) com create e create_by_email; deps bcrypt e pyjwt	T-SPEC
+AC-002	U-001	POST /users registra usuario (senha bcrypt, email unico, 409 se existir); POST /auth/login valida e retorna access_token JWT ({"access_token": ..., "token_type": "bearer"})	T-SPEC
+AC-003	U-003	get_current_user (Authorization Bearer -> decode JWT -> carrega User; falha 401) e create_access_token; config env JWT_SECRET e ACCESS_TOKEN_EXPIRE_MINUTES (default 60)	T-SPEC
+AC-004	U-002	Chat.user_id (FK users) + migration; ChatService.create exige user_id; ChatRepository.list(user_id) e get_by_id filtram por dono; chat alheio 404	T-SPEC
+AC-005	U-002	routers de chats exigem get_current_user; POST/GET/DELETE so do dono; chat alheio 404 (nao vaza existencia)	T-SPEC
+AC-006	U-004	routers de files e messages exigem get_current_user; antes de operar, verifica _ensure_chat_owned (404 se forcado)	T-SPEC
+AC-007	U-005	testes de API com fixture autenticado: registro, login, chat isolado entre dois usuarios, files/messages de chat alheio 404; testes existentes adaptados	T-SPEC
+AC-008	U-001	login invalido -> 401 sem detalhar (usuario nao existe ou senha invalida); rotas de auth preservadas	T-SPEC

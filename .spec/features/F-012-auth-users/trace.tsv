@@ -1,0 +1,9 @@
+#AC-id	comando-teste	T-id	status	sha	strict
+AC-001	uv run pytest tests/models/test_user_models.py -q	T-SPEC	proven	371950f	0
+AC-002	uv run pytest tests/api/test_auth.py -q -k 'ac002' tests/api/test_auth_units.py -q	T-SPEC	proven	371950f	0
+AC-003	uv run pytest tests/api/test_auth_units.py -q	T-SPEC	proven	371950f	0
+AC-004	uv run pytest tests/models/test_user_models.py -q -k 'chat or repo' tests/api/test_auth.py -q -k 'ac005 or owner'	T-SPEC	proven	371950f	0
+AC-005	uv run pytest tests/api/test_auth.py -q -k 'ac005 or owner or requires_auth'	T-SPEC	proven	371950f	0
+AC-006	uv run pytest tests/api/test_auth.py -q -k 'ac006'	T-SPEC	proven	371950f	0
+AC-007	uv run pytest tests/api/test_auth.py -q	T-SPEC	proven	371950f	0
+AC-008	uv run pytest tests/api/test_auth.py -q -k 'ac008 or ac002 or login'	T-SPEC	proven	371950f	0

@@ -1,0 +1,7 @@
+#id	tipo	status	texto
+A-001	A	confirmada	Registro publico (POST /users) + login (POST /auth/login) JWT
+A-002	A	confirmada	Ownership estrito: list/get/delete so do dono; chats alheios 404
+A-003	A	confirmada	Hash de senha com bcrypt
+A-004	A	confirmada	Files/messages herdam isolamento via chat.user_id
+A-005	A	confirmada	get_current_user/create_access_token como dependencias reutilizaveis
+A-006	A	confirmada	JWT com pyjwt + bcrypt (deps novas)
