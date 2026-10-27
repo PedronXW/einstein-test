@@ -1,0 +1,5 @@
+#id	tipo	status	texto
+A-001	A	confirmada	Celery autoretry_for com backoff exponencial (max_retries=3 default)
+A-002	A	confirmada	Erros permanentes nao retry (marcam error)
+A-003	A	confirmada	Idempotencia preservada (ready -> skip)
+A-004	A	confirmada	error_detail = ultima causa apos esgotar

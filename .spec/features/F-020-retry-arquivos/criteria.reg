@@ -1,0 +1,5 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-001	vectorize_file ganha autoretry_for (ConnectionError/timeout/5xx do storage+LLM), retry_backoff=True, retry_backoff_max, max_retries via env VECTORIZE_MAX_RETRIES (default 3), retry_jitter	T-SPEC
+AC-002	U-002	erros permanentes (VectorizationError, url invalida, arquivo nao encontrado) nao disparam retry — marcam error na primeira tentativa	T-SPEC
+AC-003	U-003	idempotencia mantida: status ready retorna sem reprocessar (guard preservado)	T-SPEC
+AC-004	U-004	apos esgotar max_retries, status=error com error_detail (nome da excecao da ultima tentativa); task marcada failed no resultado Celery apenas quando esgotou retries	T-SPEC
