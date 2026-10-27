@@ -1,0 +1,8 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-001	ChatOpenAIAdapter ganha astream(prompt) -> AsyncIterator[str] via ChatOpenAI.astream; ChatLLM (Protocol) ganha astream opcional	T-SPEC
+AC-002	U-001	RagService ganha astream(...) -> AsyncIterator[str] executando o grafo LangGraph (graph.astream, stream_mode=custom) e emitindo tokens	T-SPEC
+AC-003	U-003	FakeChatLLM.astream deterministico (mesmos tokens do stream); testes de SSE usam versao async	T-SPEC
+AC-004	U-001	POST /chats/{chat_id}/messages vira async def + async generator no StreamingResponse; mantem tokens, message_id, [DONE] e event: error sem salvar assistant	T-SPEC
+AC-005	U-002	POST /chats/{chat_id}/files vira async def; await file.read() e run_in_threadpool para vetorizacao (pypdf, boto3, embedding, insert); mantem 413/422/200 e chunk_ids/vector_reference	T-SPEC
+AC-006	U-004	Singleton: ChatOpenAIAdapter/Embedder compartilhados entre requests (evita recriar client HTTP); RagService/retriever criados por request (session por-request); reset nos testes	T-SPEC
+AC-007	U-003	testes: suite completa verde; teste de concorrencia leve (N perguntas em paralelo com fake, SSE integro por request)	T-SPEC

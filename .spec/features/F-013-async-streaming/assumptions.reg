@@ -1,0 +1,6 @@
+#id	tipo	status	texto
+A-001	A	confirmada	SSE e upload em async def (sem fila nesta feature)
+A-002	A	confirmada	Upload usa await file.read() + run_in_threadpool (boto3/pypdf sync)
+A-003	A	confirmada	ChatOpenAIAdapter.astream (client async do langchain/openai)
+A-004	A	confirmada	ChatOpenAIAdapter/Embedder compartilhados (singleton); RagService/retriever por request (session por-request)
+A-005	A	confirmada	Fila/background (Celery/Redis) fica para a F-015
