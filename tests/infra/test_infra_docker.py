@@ -143,7 +143,7 @@ def test_ac005_network_declared(cfg: str) -> None:
 
 
 def test_ac005_isolated_from_default(cfg: str) -> None:
-    for svc in ("postgres", "minio"):
+    for svc in ("postgres", "minio", "redis"):
         block = service_block(cfg, svc)
         assert "infra-net" in block, f"{svc} na rede infra-net"
         assert "default" not in block, f"{svc} nao deve estar na rede default"
@@ -153,6 +153,8 @@ def test_ac002_imagens_compose(cfg: str) -> None:
     import re
 
     images = set(re.findall(r"^\s{4}image:\s*(\S+)", cfg, re.MULTILINE))
-    assert images == {"ankane/pgvector:latest", "minio/minio:latest"}, (
-        "únicas imagens: ankane/pgvector + minio/minio"
-    )
+    assert images == {
+        "ankane/pgvector:latest",
+        "minio/minio:latest",
+        "redis:7-alpine",
+    }, "imagens: pgvector + minio + redis (F-015)"

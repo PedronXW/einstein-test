@@ -105,10 +105,10 @@ def test_ac005_upload_file_still_works(client):
         files={"file": ("nota.txt", io.BytesIO(b"texto longo " * 30), "text/plain")},
         headers=h,
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 202, "upload async enfileira (background)"
     body = resp.json()
     assert body["name"] == "nota.txt"
-    assert body["chunk_ids"], "upload vetoriza (async) e retorna chunk_ids"
+    assert body["status"] == "pending", "upload enfileirado marca pending"
 
 
 def test_ac005_upload_over_limit_413(client):

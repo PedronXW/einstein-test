@@ -1,4 +1,6 @@
-"""Fixtures compartilhadas de testes."""
+"""
+Fixtures compartilhadas de testes.
+"""
 
 import pytest
 from fastapi.testclient import TestClient
@@ -9,12 +11,35 @@ from sqlalchemy.pool import StaticPool
 from einstein_test.db.base import Base
 from einstein_test.main import create_app
 
+# Fila capturada dos uploads (mock global de enqueue_vectorization).
+_queued_file_ids: list[int] = []
+
 
 @pytest.fixture(autouse=True)
 def _jwt_secret(monkeypatch):
     """Assegura JWT_SECRET configurado nos testes (token assinado local)."""
     monkeypatch.setenv("JWT_SECRET", "segredo-dos-testes-0123456789abcdefghijklmnop")
     monkeypatch.setenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60")
+
+
+@pytest.fixture(autouse=True)
+def _mock_enqueue(monkeypatch):
+    """Mocka a fila de vetorização em todos os testes (sem Redis/Celery).
+
+    Substitui `api.files.enqueue_vectorization` por uma função que coleta os
+    file_ids na lista global `_queued_file_ids` — evita .delay() real → Redis.
+    """
+    global _queued_file_ids
+    _queued_file_ids = []
+    import einstein_test.api.files as files_api
+
+    monkeypatch.setattr(files_api, "enqueue_vectorization", _queued_file_ids.append)
+
+
+@pytest.fixture
+def enqueue_spy() -> list[int]:
+    """Lista dos file_ids enfileirados nos uploads (mock da fila)."""
+    return _queued_file_ids
 
 
 @pytest.fixture

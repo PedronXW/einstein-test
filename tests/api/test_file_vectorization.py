@@ -1,7 +1,8 @@
-"""Testes TDD da feature F-010 (AC-006/AC-008: upload síncrono vetoriza) — adaptado ao auth.
+"""Testes da feature F-010 adaptados à F-015 (upload 202 + vetorização em background).
 
-Valida que POST /chats/{chat_id}/files extrai texto, chunk, embed e persiste
-vetores de forma síncrona — o FileRead retorna chunk_ids e vector_reference.
+Valida que POST /chats/{chat_id}/files retorna 202 (status=pending) e que a
+vetorização acontece via task Celery (marcando ready) — o contrato síncrono
+anterior (200 + chunk_ids na hora) mudou para a fila.
 """
 
 import io
@@ -37,13 +38,9 @@ def client():
     app = create_app()
     app.dependency_overrides.clear()
     with TestClient(app) as c:
-        headers = _register_and_login(c)
+        headers = register_and_login(c, email="user@b.com")
         yield c, headers
     engine.dispose()
-
-
-def _register_and_login(client, email="user@b.com"):
-    return register_and_login(client, email=email)
 
 
 def _create_chat(client, headers, name="Chat"):
@@ -58,38 +55,36 @@ def _upload(client, headers, chat_id, name="nota.txt", content=b"texto longo " *
     )
 
 
-def test_ac006_upload_vectorizes_synchronously(client):
+def test_ac006_upload_returns_202_pending(client, enqueue_spy):
     c, h = client
     chat = _create_chat(c, h)
     resp = _upload(c, h, chat["id"])
-    assert resp.status_code == 200
+    assert resp.status_code == 202
     body = resp.json()
-    assert isinstance(body["chunk_ids"], list), "FileRead expõe chunk_ids"
-    assert body["chunk_ids"], "upload vetoriza e retorna chunk_ids na hora"
-    assert body["vector_reference"], "FileRead expõe vector_reference"
+    assert body["status"] == "pending", "upload enfileira e retorna pending"
+    assert body["id"] in enqueue_spy, "task enfileirada (mock)"
 
 
-def test_ac006_upload_pdf_vectorizes(client):
+def test_ac006_upload_pdf_202(client):
     c, h = client
     chat = _create_chat(c, h)
     resp = _upload(c, h, chat["id"], name="doc.pdf", content=_minimal_pdf(), type_="application/pdf")
-    assert resp.status_code == 200
-    body = resp.json()
-    assert body["chunk_ids"], "PDF vetorizado de forma síncrona no upload"
+    assert resp.status_code == 202
+    assert resp.json()["status"] == "pending"
 
 
 def test_ac006_read_shape_includes_vector_fields(client):
     c, h = client
     chat = _create_chat(c, h)
     body = _upload(c, h, chat["id"], name="shape.txt", content=b"abc " * 5).json()
-    assert {"chunk_ids", "vector_reference"} <= set(body)
+    assert {"status", "error_detail", "chunk_ids", "vector_reference"} <= set(body)
 
 
-def test_ac006_upload_non_text_empty_chunk_ids(client):
+def test_ac006_upload_non_text_pending(client):
     c, h = client
     chat = _create_chat(c, h)
     body = _upload(c, h, chat["id"], name="img.png", content=b"\x89PNG", type_="image/png").json()
-    assert body["chunk_ids"] == [], "arquivo binário sem texto -> chunk_ids vazio"
+    assert body["status"] == "pending", "arquivo binário aceito e enfileirado"
 
 
 def test_ac008_get_and_list_keep_vector_fields(client):
@@ -97,9 +92,9 @@ def test_ac008_get_and_list_keep_vector_fields(client):
     chat = _create_chat(c, h)
     created = _upload(c, h, chat["id"], name="nota.txt", content=b"abc " * 20).json()
     got = c.get(f"/files/{created['id']}", headers=h).json()
-    assert got["chunk_ids"] == created["chunk_ids"]
+    assert got["status"] == "pending"
     listing = c.get(f"/chats/{chat['id']}/files", headers=h).json()
-    assert listing[0]["vector_reference"] == created["vector_reference"]
+    assert listing[0]["id"] == created["id"]
 
 
 def _minimal_pdf() -> bytes:

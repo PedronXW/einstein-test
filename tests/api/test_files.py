@@ -59,12 +59,13 @@ def test_ac004_upload_file_to_chat(client):
     c, h = client
     chat = _create_chat(c, h)
     resp = _upload(c, h, chat["id"])
-    assert resp.status_code == 200
+    assert resp.status_code == 202, "upload enfileirado (processamento em background)"
     body = resp.json()
     assert body["name"] == "doc.pdf"
     assert body["size"] == 4
     assert body["chat_id"] == chat["id"]
     assert body["url"]
+    assert body["status"] == "pending"
 
 
 def test_ac004_list_files_by_chat(client):
@@ -145,7 +146,7 @@ def test_ac004_upload_sanitizes_traversal_name(client):
     c, h = client
     chat = _create_chat(c, h)
     resp = _upload(c, h, chat["id"], name="../../etc/passwd", content=b"x")
-    assert resp.status_code == 200
+    assert resp.status_code == 202
     body = resp.json()
     assert body["name"] == "passwd", "nome sanitizado (basename)"
     storage = get_storage()
