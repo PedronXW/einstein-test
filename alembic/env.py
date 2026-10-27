@@ -7,7 +7,7 @@ from sqlalchemy import pool
 from alembic import context
 
 from einstein_test.db.base import Base
-from einstein_test.models import Chat, File, Message  # noqa: F401
+from einstein_test.models import Chat, File, Message, User  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

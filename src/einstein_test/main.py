@@ -3,6 +3,7 @@
 from fastapi import FastAPI
 from uvicorn import run as uvicorn_run
 
+from einstein_test.api.auth_router import router as auth_router
 from einstein_test.api.chats import router as chats_router
 from einstein_test.api.files import router as files_router
 from einstein_test.api.messages import router as messages_router
@@ -12,6 +13,7 @@ from einstein_test.api.router import router
 def create_app() -> FastAPI:
     app = FastAPI(title="einstein-test")
     app.include_router(router)
+    app.include_router(auth_router)
     app.include_router(chats_router)
     app.include_router(messages_router)
     app.include_router(files_router)

@@ -4,5 +4,6 @@ from einstein_test.models.chat import Chat
 from einstein_test.models.file import File
 from einstein_test.models.file_chunk import FileChunk
 from einstein_test.models.message import Message
+from einstein_test.models.user import User
 
-__all__ = ["Chat", "File", "FileChunk", "Message"]
+__all__ = ["Chat", "File", "FileChunk", "Message", "User"]
