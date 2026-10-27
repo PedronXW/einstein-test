@@ -1,0 +1,5 @@
+#id	tipo	status	texto
+A-001	A	confirmada	Coluna model no User (nullable, null = default do env)
+A-002	A	confirmada	GET/PATCH /users/me para consultar/atualizar
+A-003	A	confirmada	Modelos permitidos SO via env (ALLOWED_MODELS)
+A-004	A	confirmada	RAG com adapter por usuario (sem singleton global do LLM)

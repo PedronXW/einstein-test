@@ -1,0 +1,6 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-001	User.model (String nullable, default NULL) + migration; UserRead expoe model; modelo ausente -> default do env	T-SPEC
+AC-002	U-002	GET /users/me (autenticado) retorna perfil com model; PATCH /users/me {"model":...} atualiza; valida contra ALLOWED_MODELS env -> invalido 422; vazio/null restaura null (default)	T-SPEC
+AC-003	U-003	ALLOWED_MODELS lida do env (default azure/gpt-5-mini,azure/gpt-6-luna); helper allowed_models(); testes com override	T-SPEC
+AC-004	U-004	get_rag_service(retriever, *, model=None) cria ChatOpenAIAdapter por usuario com model (ou default); remover singleton global do LLM (embedder compartilhado); POST /messages passa current_user.model ao RAG	T-SPEC
+AC-005	U-002	testes: PATCH invalido 422; PATCH valido 200 e GET reflete; sem model usa default; RAG chamado com model do usuario (fake registra model)	T-SPEC
