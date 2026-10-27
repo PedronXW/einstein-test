@@ -1,0 +1,6 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-001	ChatOpenAIAdapter.astream aplica retry transiente apenas na aquisicao do primeiro chunk (tenacity wait_exponential); apos o primeiro token nao re-tenta	T-SPEC
+AC-002	U-002	ChatOpenAIAdapter.stream (sync) tem o mesmo retry transiente no primeiro chunk (compat F-011)	T-SPEC
+AC-003	U-003	_embed_question/retrieve (embeddings) aplica retry transiente sem afetar streaming da resposta	T-SPEC
+AC-004	U-004	config env LLM_MAX_RETRIES (default 2), LLM_RETRY_BACKOFF (default 1s); logs estruturados do retry (event llm_retry, attempt)	T-SPEC
+AC-005	U-001	testes: fake falha 1x no inicio -> astream produz tokens; fake sempre falha -> event error sem assistant; fake emite 1 token depois falha -> NAO re-tenta; retry so p/ excecoes esperadas	T-SPEC

@@ -1,0 +1,5 @@
+#id	tipo	status	texto
+A-001	A	confirmada	Retry limitado (tenacity) apenas no primeiro token (antes do stream)
+A-002	A	confirmada	Embeddings tambem com retry transiente
+A-003	A	confirmada	Config via env (LLM_MAX_RETRIES, LLM_RETRY_BACKOFF)
+A-004	A	confirmada	Apos esgotar, comportamento atual (event: error sem salvar)
