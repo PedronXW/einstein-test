@@ -40,6 +40,7 @@ build-backend = "uv_build"
 dev = [
     "anyio>=4.15.1",
     "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
     "pyyaml>=6.0.3",
     "ruff>=0.17.3",
 ]
@@ -59,3 +60,19 @@ select = ["F", "E9"]
 
 [tool.ruff.lint.per-file-ignores]
 "src/einstein_test/models/**" = ["F401"]
+
+[tool.coverage.run]
+source = ["einstein_test"]
+omit = [
+    "einstein_test/main.py",
+    "einstein_test/settings.py",
+    "einstein_test/middleware/*",
+    "einstein_test/storage/minio.py",
+    "einstein_test/logging_setup.py",
+    "einstein_test/tasks/*",
+]
+
+[tool.coverage.report]
+fail_under = 70
+show_missing = true
+skip_covered = false
