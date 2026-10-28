@@ -1,0 +1,7 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-001	novo endpoint POST /chats/{chat_id}/files/batch que aceita files (multiplos UploadFile) e retorna 207; endpoint atual de arquivo unico permanece intacto e funcional	T-SPEC
+AC-002	U-001	todos validos: 207 com created = N FileRead (mesmos campos do upload unico) e failures vazio; vetorizacao enfileirada para cada arquivo criado	T-SPEC
+AC-003	U-002	falha parcial: created so com os validos e failures = [{index, name, reason}] dos invalidos; validos persistidos mesmo com invalidos presentes (nao atomico)	T-SPEC
+AC-004	U-002	arquivo individual acima de 50MB entra em failures (reason) sem derrubar o lote; limite de 50MB por arquivo preservado	T-SPEC
+AC-005	U-001	chamada com mais de 20 arquivos -> HTTP 413 (MAX_FILES=20)	T-SPEC
+AC-006	U-001	chat inexistente -> HTTP 404, consistente com o upload unico	T-SPEC

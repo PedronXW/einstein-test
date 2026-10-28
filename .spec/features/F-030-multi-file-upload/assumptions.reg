@@ -1,0 +1,5 @@
+#id	tipo	status	texto
+A-001	A	confirmed	novo endpoint /batch sem alterar o de arquivo unico (escolha do usuario)
+A-002	A	confirmed	falha parcial nao-atomica: cria validos e reporta invalidos
+A-003	A	confirmed	resposta HTTP 207 com corpo misto {created, failures}
+A-004	A	confirmed	limite MAX_FILES=20 por chamada
