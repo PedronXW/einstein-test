@@ -1,0 +1,4 @@
+#id	tipo	status	texto
+A-001	A	confirmed	bucket einstein e o bucket da aplicacao (BUCKET em storage/minio.py)
+A-002	A	confirmed	migrations idempotentes (upgrade head no schema atual e no-op)
+A-003	A	confirmed	testes nao tocam MinIO real: fixture autouse _storage_fake usa InMemoryStorage; ensure_bucket testado com fake do boto3

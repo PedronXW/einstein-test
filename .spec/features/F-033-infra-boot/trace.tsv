@@ -1,0 +1,6 @@
+#AC-id	comando-teste	T-id	status	sha	strict
+AC-001	uv run pytest tests/infra/test_storage_bucket.py -q -k 'ensure_bucket and not noop'	T-SPEC	proven	fc369a2	0
+AC-002	uv run pytest tests/infra/test_storage_bucket.py -q -k 'noop or lifespan'	T-SPEC	proven	fc369a2	0
+AC-003	uv run pytest tests/infra/test_docker.py -q -k 'entrypoint'	T-SPEC	proven	fc369a2	0
+AC-004	uv run pytest tests/infra/test_docker.py -q -k 'dockerfile or versions'	T-SPEC	proven	fc369a2	0
+AC-005	uv run pytest tests/infra/test_docker.py -q -k 'minio_endpoint or workers_fallback'	T-SPEC	proven	fc369a2	0

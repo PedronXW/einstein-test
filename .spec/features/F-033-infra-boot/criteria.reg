@@ -1,0 +1,6 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-001	MinioStorage.ensure_bucket verifica head_bucket e cria se ausente; idempotente; erro nao-bucket-ausente propaga; indisponibilidade do MinIO no boot apenas loga	T-SPEC
+AC-002	U-001	InMemoryStorage.ensure_bucket e no-op; lifespan do create_app chama get_storage().ensure_bucket()	T-SPEC
+AC-003	U-002	entrypoint.sh roda alembic upgrade head antes do comando real (exec "\$@"), com retry configuravel e exit 1 ao esgotar	T-SPEC
+AC-004	U-002	Dockerfile copia alembic.ini + alembic/ + entrypoint e define ENTRYPOINT (vale para api e worker)	T-SPEC
+AC-005	U-003	compose: api/worker com MINIO_ENDPOINT http://minio:9000; command do api usa \${API_WORKERS:-1} sem interpolacao vazia	T-SPEC
