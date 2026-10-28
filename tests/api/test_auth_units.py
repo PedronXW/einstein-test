@@ -7,9 +7,9 @@ com retorno de access_token.
 import pytest
 from fastapi import HTTPException
 
-from einstein_test.api.auth import create_access_token, decode_token, get_current_user
+from einstein_test.api.auth import get_current_user
 from einstein_test.repositories.user import UserRepositorySQLAlchemy
-from einstein_test.security import hash_password
+from einstein_test.security import create_access_token, decode_token, hash_password
 
 
 def test_ac003_create_and_decode_token():

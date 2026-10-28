@@ -1,7 +1,13 @@
-"""Serviço de Message — orquestra CRUD sobre o repositório."""
+"""Serviço de Message — orquestra CRUD sobre o repositório.
+
+`MAX_HISTORY` é a política de histórico do RAG (fonte única — o controller
+importa daqui, não define a própria constante).
+"""
 
 from einstein_test.models.message import Message
 from einstein_test.repositories import MessageRepository
+
+MAX_HISTORY = 10
 
 
 class MessageNotFoundError(LookupError):

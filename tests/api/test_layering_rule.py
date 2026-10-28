@@ -72,3 +72,4 @@ def test_ac001_business_rules_not_in_controllers():
         assert "MAX_FILES_PER_BATCH =" not in src, f"{name}: limite de lote no controller"
         assert "DEFAULT_USER_MODEL =" not in src, f"{name}: constante de produto no controller"
         assert "FILE_STATUS_" not in src, f"{name}: vocabulário de status no controller"
+        assert "MAX_HISTORY =" not in src, f"{name}: política de histórico RAG no controller"

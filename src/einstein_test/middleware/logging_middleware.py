@@ -47,7 +47,7 @@ class RequestIdMiddleware(BaseHTTPMiddleware):
         auth = request.headers.get("authorization", "")
         if auth.startswith("Bearer "):
             try:
-                from einstein_test.api.auth import decode_token
+                from einstein_test.security import decode_token
 
                 payload = decode_token(auth.removeprefix("Bearer ").strip())
                 user_id = payload.get("sub")

@@ -1,6 +1,7 @@
 """Autenticação JWT e dependências de usuário autenticado.
 
-- `create_access_token(subject)` -> string JWT (pyjwt) com `sub` e `exp`.
+- `create_access_token(subject)` -> string JWT (pyjwt) com `sub` e `exp`
+  (helpers JWT moram em `einstein_test.security`; reutilizados aqui).
 - `decode_token(token)` -> payload (raise 401 se inválido/expirado).
 - `get_current_user(authorization, session)` -> User ou 401.
 
@@ -9,53 +10,20 @@ Configuração via ambiente (testes/injeção) ou `.env`: `JWT_SECRET`
 resolvido uma única vez e cacheado.
 """
 
-from datetime import UTC, datetime, timedelta
-from functools import lru_cache
-
-import jwt
 from fastapi import Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 
 from einstein_test.api.dependencies import get_session
 from einstein_test.models import User
 from einstein_test.repositories.user import UserRepositorySQLAlchemy
+from einstein_test.security import create_access_token, decode_token
 from einstein_test.services.user import UserService
-from einstein_test.settings import get_settings
 
-ALGORITHM = "HS256"
-DEFAULT_EXPIRE_MINUTES = 60
-
-
-@lru_cache(maxsize=1)
-def _secret() -> str:
-    secret = get_settings().jwt_secret
-    if not secret:
-        raise RuntimeError("JWT_SECRET não configurado (defina no .env)")
-    return secret
-
-
-@lru_cache(maxsize=1)
-def _expire_minutes() -> int:
-    return get_settings().access_token_expire_minutes
-
-
-def create_access_token(subject: str) -> str:
-    """Gera JWT com `sub` = email do usuário e expiração configurada."""
-    now = datetime.now(UTC)
-    payload = {
-        "sub": subject,
-        "iat": now,
-        "exp": now + timedelta(minutes=_expire_minutes()),
-    }
-    return jwt.encode(payload, _secret(), algorithm=ALGORITHM)
-
-
-def decode_token(token: str) -> dict:
-    """Decodifica e valida o JWT; levanta 401 se inválido/expirado."""
-    try:
-        return jwt.decode(token, _secret(), algorithms=[ALGORITHM])
-    except jwt.PyJWTError:
-        raise HTTPException(status_code=401, detail="token inválido ou expirado") from None
+__all__ = [
+    "create_access_token",
+    "decode_token",
+    "get_current_user",
+]
 
 
 def get_current_user(

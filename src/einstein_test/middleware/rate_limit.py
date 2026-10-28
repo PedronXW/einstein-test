@@ -23,7 +23,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-from einstein_test.api.auth import decode_token
+from einstein_test.security import decode_token
 
 RATE_LIMIT_BACKEND = os.getenv("RATE_LIMIT_BACKEND", "memory").lower()
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")

@@ -17,7 +17,11 @@ from einstein_test.repositories.message import MessageRepositorySQLAlchemy
 from einstein_test.repositories.user import UserRepositorySQLAlchemy
 from einstein_test.schemas.message import MessageCreate, MessageRead
 from einstein_test.services.chat import ChatNotFoundError, ChatService
-from einstein_test.services.message import MessageNotFoundError, MessageService
+from einstein_test.services.message import (
+    MAX_HISTORY,
+    MessageNotFoundError,
+    MessageService,
+)
 from einstein_test.services.rag import RagService, get_rag_service
 from einstein_test.services.user import UserService
 from einstein_test.vector import VectorRepositorySQLAlchemy
@@ -25,8 +29,6 @@ from einstein_test.vector import VectorRepositorySQLAlchemy
 logger = get_logger("api.messages")
 
 router = APIRouter(tags=["messages"])
-
-MAX_HISTORY = 10
 
 
 def _chat_service(session: Session) -> ChatService:

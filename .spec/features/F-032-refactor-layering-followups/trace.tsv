@@ -1,0 +1,3 @@
+#AC-id	comando-teste	T-id	status	sha	strict
+AC-001	uv run pytest tests/api/test_layering_rule.py tests/api/test_layering_followups.py -q -p no:cacheprovider	T-SPEC	proven	128e58a	0
+AC-002	uv run pytest tests/api/test_layering_followups.py tests/api/test_auth_units.py -q -p no:cacheprovider	T-SPEC	proven	128e58a	0

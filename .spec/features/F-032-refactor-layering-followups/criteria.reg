@@ -1,0 +1,3 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-001	MAX_HISTORY nao e definido no controller; MessageService e a fonte unica; controller apenas importa; test_layering_rule rejeita MAX_HISTORY = em api	T-SPEC
+AC-002	U-002	create_access_token/decode_token moram em security; api/auth reutiliza de la; middleware importa de security, nunca de api (prova estrutural)	T-SPEC

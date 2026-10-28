@@ -1,0 +1,5 @@
+#id	tipo	status	texto
+A-001	A	confirmada	decode_token mantém contrato (HTTPException 401) mesmo em security; security passa a depender de fastapi para a exceção, sem depender de api
+A-002	A	confirmada	mudança 100% estrutural: nenhum contrato HTTP/dados muda
+Q-001	Q	confirmada	MAX_HISTORY fonte única em MessageService (services/message.py), política da camada de mensagens/RAG
+Q-002	Q	confirmada	security pode importar fastapi (HTTPException) para manter decode_token; aceitável pois elimina middleware->api
