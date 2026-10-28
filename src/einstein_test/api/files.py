@@ -17,13 +17,12 @@ from einstein_test.services.file import (
     BatchFileInput,
     FileNotFound,
     FileService,
+    FileTooLargeError,
 )
 
 logger = get_logger("api.files")
 
 router = APIRouter(tags=["files"])
-
-MAX_FILES_PER_BATCH = 20
 
 
 def _chat_service(session: Session) -> ChatService:
@@ -72,8 +71,6 @@ async def upload_file(
     except ChatNotFoundError:
         raise HTTPException(status_code=404, detail="chat não encontrado") from None
     content = await file.read(MAX_UPLOAD_SIZE + 1)
-    if len(content) > MAX_UPLOAD_SIZE:
-        raise HTTPException(status_code=413, detail="arquivo muito grande")
     name = file.filename or "arquivo"
     content_type = file.content_type
     service = _file_service(session)
@@ -87,7 +84,10 @@ async def upload_file(
         )
         return FileRead.model_validate(file_)
 
-    created = await run_in_threadpool(_create)
+    try:
+        created = await run_in_threadpool(_create)
+    except FileTooLargeError:
+        raise HTTPException(status_code=413, detail="arquivo muito grande") from None
     # vetorização em background
     await run_in_threadpool(enqueue_vectorization, created.id)
     return created
@@ -108,11 +108,6 @@ async def upload_files_batch(
         _ensure_chat_owned(session, chat_id, current_user.id)
     except ChatNotFoundError:
         raise HTTPException(status_code=404, detail="chat não encontrado") from None
-    if len(files) > MAX_FILES_PER_BATCH:
-        raise HTTPException(
-            status_code=413,
-            detail=f"máximo de {MAX_FILES_PER_BATCH} arquivos por chamada",
-        )
     service = _file_service(session)
     uploads = [
         BatchFileInput(
@@ -122,7 +117,10 @@ async def upload_files_batch(
         )
         for f in files
     ]
-    result = await run_in_threadpool(service.create_files_batch, chat_id, uploads)
+    try:
+        result = await run_in_threadpool(service.create_files_batch, chat_id, uploads)
+    except ValueError as exc:
+        raise HTTPException(status_code=413, detail=str(exc)) from None
     for file_ in result.created:
         await run_in_threadpool(enqueue_vectorization, file_.id)
     return FileBatchResult(

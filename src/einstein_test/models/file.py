@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import uuid
 from typing import TYPE_CHECKING
 
 from sqlalchemy import JSON, BigInteger, ForeignKey, String, text
@@ -14,10 +13,6 @@ from einstein_test.models.mixin import TimestampMixin
 
 if TYPE_CHECKING:
     from einstein_test.models.chat import Chat
-
-FILE_STATUS_PENDING = "pending"
-FILE_STATUS_READY = "ready"
-FILE_STATUS_ERROR = "error"
 
 
 class File(TimestampMixin, Base):
@@ -38,10 +33,10 @@ class File(TimestampMixin, Base):
         server_default=text("'[]'"),
     )
     vector_reference: Mapped[str | None] = mapped_column(
-        String(36), nullable=True, default=lambda: str(uuid.uuid4())
+        String(36), nullable=True
     )
     status: Mapped[str] = mapped_column(
-        String(16), nullable=False, default=FILE_STATUS_PENDING,
+        String(16), nullable=False, default="pending",
         server_default=text("'pending'"),
     )
     error_detail: Mapped[str | None] = mapped_column(

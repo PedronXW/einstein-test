@@ -8,7 +8,7 @@ from typing import NamedTuple
 from einstein_test.logging_setup import get_logger
 from einstein_test.models.file import File
 from einstein_test.repositories import FileRepository
-from einstein_test.storage import Storage, get_storage
+from einstein_test.storage import Storage, get_storage, parse_s3_url
 from einstein_test.vector import (
     Embedder,
     TextChunker,
@@ -21,6 +21,11 @@ logger = get_logger("services.file")
 
 MAX_UPLOAD_SIZE = 50 * 1024 * 1024  # 50 MB
 MAX_CHUNKS = 500
+MAX_FILES_PER_BATCH = 20
+
+FILE_STATUS_PENDING = "pending"
+FILE_STATUS_READY = "ready"
+FILE_STATUS_ERROR = "error"
 
 
 class BatchFileInput:
@@ -52,6 +57,10 @@ class FileBatchUploadResult:
 
 class FileNotFound(LookupError):
     """Lançada quando um file não existe."""
+
+
+class FileTooLargeError(ValueError):
+    """Lançada quando um arquivo excede MAX_UPLOAD_SIZE."""
 
 
 class VectorizationError(RuntimeError):
@@ -124,6 +133,10 @@ class FileService:
         *,
         key: str | None = None,
     ) -> File:
+        if len(content) > MAX_UPLOAD_SIZE:
+            raise FileTooLargeError(
+                f"arquivo excede {MAX_UPLOAD_SIZE} bytes (máximo por arquivo)"
+            )
         safe_name = sanitize_name(name)
         object_key = key or f"chats/{chat_id}/{uuid.uuid4().hex}/{safe_name}"
         url = self.storage.upload(
@@ -156,6 +169,8 @@ class FileService:
         inválidos viram FileUploadFailure(index, name, reason) — nunca lança
         exceção por arquivo individual, o lote inteiro prossegue.
         """
+        if len(uploads) > MAX_FILES_PER_BATCH:
+            raise ValueError(f"máximo de {MAX_FILES_PER_BATCH} arquivos por chamada")
         result = FileBatchUploadResult()
         for index, upload in enumerate(uploads):
             safe_name = sanitize_name(upload.name)
@@ -199,5 +214,45 @@ class FileService:
         if self.vector_repository is not None and file_.chunk_ids:
             self.vector_repository.delete_chunks(file_id)
         self.repository.delete(file_id)
-        if file_.url and file_.url.startswith(f"s3://{self.storage.bucket}/"):
-            self.storage.delete(self.storage.bucket, file_.url.split("/", 3)[3])
+        loc = parse_s3_url(file_.url) if file_.url else None
+        if loc is not None and loc[0] == self.storage.bucket:
+            self.storage.delete(loc[0], loc[1])
+
+    def vectorize_uploaded(self, file_id: int) -> str:
+        """Orquestra a vetorização de um arquivo já em storage (task de fundo).
+
+        Retorna o status resultante: `missing` (arquivo inexistente), `ready`
+        (já vetorizado ou concluído agora) ou `error`. Persiste via repository.
+        """
+        file_ = self.repository.get_by_id(file_id)
+        if file_ is None:
+            return "missing"
+        if file_.status == FILE_STATUS_READY:
+            return FILE_STATUS_READY
+        loc = parse_s3_url(file_.url)
+        if loc is None:
+            self.mark_error(file_id, "url inválida do arquivo")
+            return FILE_STATUS_ERROR
+        bucket, key = loc
+        content = self.storage.download(bucket, key)
+        chunk_ids, reference = self._vectorize(file_.id, file_.name, content)
+        file_.chunk_ids = chunk_ids
+        file_.vector_reference = reference
+        file_.status = FILE_STATUS_READY
+        file_.error_detail = None
+        self.repository.update_chunk_ids(file_.id, chunk_ids, reference)
+        self.repository.commit()
+        logger.info("vetorização concluída", extra={
+            "event": "vectorize_done", "file_id": file_id,
+            "status": FILE_STATUS_READY, "chunks": len(chunk_ids),
+        })
+        return FILE_STATUS_READY
+
+    def mark_error(self, file_id: int, error: str) -> None:
+        """Marca File como error (não sobrescreve `ready`)."""
+        file_ = self.repository.get_by_id(file_id)
+        if file_ is None or file_.status == FILE_STATUS_READY:
+            return
+        file_.status = FILE_STATUS_ERROR
+        file_.error_detail = error
+        self.repository.commit()

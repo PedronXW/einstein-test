@@ -26,6 +26,7 @@ class FileRepository(Protocol):
         self, file_id: int, chunk_ids: list[int], vector_reference: str
     ) -> None: ...
     def delete(self, file_id: int) -> None: ...
+    def commit(self) -> None: ...
 
 
 class FileRepositorySQLAlchemy:
@@ -79,3 +80,6 @@ class FileRepositorySQLAlchemy:
         if file_ is not None:
             file_.deleted_at = datetime.now(UTC)
             self.session.flush()
+
+    def commit(self) -> None:
+        self.session.commit()
