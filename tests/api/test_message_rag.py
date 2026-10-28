@@ -13,7 +13,7 @@ from sqlalchemy.pool import StaticPool
 from einstein_test.db.base import Base
 from einstein_test.main import create_app
 from einstein_test.services.rag import FakeChatLLM, RagService, set_rag_factory
-from tests.conftest import register_and_login
+from tests.conftest import register_and_login, seed_ready_file
 
 
 @pytest.fixture
@@ -80,6 +80,7 @@ def test_ac004_sse_contains_tokens_and_done(client):
     c, engine = client
     h = _register_and_login(c)
     chat = _create_chat(c, h)
+    seed_ready_file(engine, chat["id"])
     resp = _ask(c, chat["id"], h, content="pergunta")
     body = resp.text
     assert '"token1"' in body, "tokens do LLM fake no SSE"
@@ -94,6 +95,7 @@ def test_ac004_assistant_message_persisted(client):
     c, engine = client
     h = _register_and_login(c)
     chat = _create_chat(c, h)
+    seed_ready_file(engine, chat["id"])
     resp = _ask(c, chat["id"], h)
     assert resp.status_code == 200
     msgs = c.get(f"/chats/{chat['id']}/messages", headers=h).json()
@@ -108,6 +110,7 @@ def test_ac005_llm_error_emits_error_event_without_saving(client):
     c, engine = client
     h = _register_and_login(c)
     chat = _create_chat(c, h)
+    seed_ready_file(engine, chat["id"])
 
     from einstein_test.services.rag import reset_rag_factory
 

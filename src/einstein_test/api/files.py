@@ -15,9 +15,12 @@ from einstein_test.services.chat import ChatNotFoundError, ChatService
 from einstein_test.services.file import (
     MAX_UPLOAD_SIZE,
     BatchFileInput,
+    DuplicateFileError,
+    EmptyFileError,
     FileNotFound,
     FileService,
     FileTooLargeError,
+    UnsupportedFileTypeError,
 )
 
 logger = get_logger("api.files")
@@ -88,6 +91,12 @@ async def upload_file(
         created = await run_in_threadpool(_create)
     except FileTooLargeError:
         raise HTTPException(status_code=413, detail="arquivo muito grande") from None
+    except EmptyFileError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from None
+    except UnsupportedFileTypeError as exc:
+        raise HTTPException(status_code=415, detail=str(exc)) from None
+    except DuplicateFileError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from None
     # vetorização em background
     await run_in_threadpool(enqueue_vectorization, created.id)
     return created

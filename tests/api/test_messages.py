@@ -16,7 +16,7 @@ from einstein_test.db.base import Base
 from einstein_test.main import create_app
 from einstein_test.services.rag import FakeChatLLM, RagService, reset_rag_factory, set_rag_factory
 from einstein_test.vector import FakeEmbedder
-from tests.conftest import register_and_login
+from tests.conftest import register_and_login, seed_ready_file
 
 
 @pytest.fixture
@@ -45,7 +45,7 @@ def client():
     app.dependency_overrides.clear()
     with TestClient(app) as c:
         headers = _register_and_login(c)
-        yield c, headers
+        yield c, headers, engine
 
     reset_rag_factory()
     engine.dispose()
@@ -57,6 +57,11 @@ def _register_and_login(client, email="user@b.com"):
 
 def _create_chat(client, headers, name="Chat"):
     return client.post("/chats", json={"name": name}, headers=headers).json()
+
+
+def _with_ready_file(engine, chat_id):
+    seed_ready_file(engine, chat_id)
+    return chat_id
 
 
 def _post_message(client, headers, chat_id, content):
@@ -75,8 +80,9 @@ def _message_id_from_sse(body: str) -> int:
 
 
 def test_ac003_create_message_in_chat(client):
-    c, h = client
+    c, h, engine = client
     chat = _create_chat(c, h)
+    _with_ready_file(engine, chat["id"])
     resp = _post_message(c, h, chat["id"], "primeira mensagem")
     assert resp.status_code == 200
     assert resp.headers["content-type"].startswith("text/event-stream")
@@ -90,7 +96,7 @@ def test_ac003_create_message_in_chat(client):
 
 
 def test_ac003_create_message_requires_content(client):
-    c, h = client
+    c, h, engine = client
     chat = _create_chat(c, h)
     resp = c.post(
         f"/chats/{chat['id']}/messages", json={}, headers=h
@@ -99,8 +105,9 @@ def test_ac003_create_message_requires_content(client):
 
 
 def test_ac003_list_messages_by_chat(client):
-    c, h = client
+    c, h, engine = client
     chat = _create_chat(c, h)
+    _with_ready_file(engine, chat["id"])
     _post_message(c, h, chat["id"], "a")
     _post_message(c, h, chat["id"], "b")
     resp = c.get(f"/chats/{chat['id']}/messages", headers=h)
@@ -110,17 +117,19 @@ def test_ac003_list_messages_by_chat(client):
 
 
 def test_ac003_list_messages_isolated_per_chat(client):
-    c, h = client
+    c, h, engine = client
     chat_a = _create_chat(c, h, "A")
     chat_b = _create_chat(c, h, "B")
+    _with_ready_file(engine, chat_a["id"])
     _post_message(c, h, chat_a["id"], "msg A")
     resp_b = c.get(f"/chats/{chat_b['id']}/messages", headers=h)
     assert resp_b.json() == []
 
 
 def test_ac003_get_message_by_id(client):
-    c, h = client
+    c, h, engine = client
     chat = _create_chat(c, h)
+    _with_ready_file(engine, chat["id"])
     _post_message(c, h, chat["id"], "busca")
     msgs = c.get(f"/chats/{chat['id']}/messages", headers=h).json()
     user = next(m for m in msgs if m["role"] == "user")
@@ -130,8 +139,9 @@ def test_ac003_get_message_by_id(client):
 
 
 def test_ac003_delete_message(client):
-    c, h = client
+    c, h, engine = client
     chat = _create_chat(c, h)
+    _with_ready_file(engine, chat["id"])
     resp = _post_message(c, h, chat["id"], "remove")
     _message_id_from_sse(resp.text)
     msgs = c.get(f"/chats/{chat['id']}/messages", headers=h).json()
@@ -144,8 +154,9 @@ def test_ac003_delete_message(client):
 
 
 def test_ac004_message_read_shape(client):
-    c, h = client
+    c, h, engine = client
     chat = _create_chat(c, h)
+    _with_ready_file(engine, chat["id"])
     _post_message(c, h, chat["id"], "shape")
     msgs = c.get(f"/chats/{chat['id']}/messages", headers=h).json()
     body = msgs[0]
@@ -155,7 +166,7 @@ def test_ac004_message_read_shape(client):
 
 
 def test_ac005_missing_chat_404(client):
-    c, h = client
+    c, h, engine = client
     resp_post = c.post(
         "/chats/999999/messages",
         json={"content": "x"},
@@ -168,7 +179,7 @@ def test_ac005_missing_chat_404(client):
 
 
 def test_ac005_missing_message_404(client):
-    c, h = client
+    c, h, engine = client
     resp_get = c.get("/messages/999999", headers=h)
     assert resp_get.status_code == 404
     resp_del = c.delete("/messages/999999", headers=h)
@@ -177,7 +188,7 @@ def test_ac005_missing_message_404(client):
 
 
 def test_ac005_soft_deleted_chat_404(client):
-    c, h = client
+    c, h, engine = client
     chat = _create_chat(c, h)
     c.delete(f"/chats/{chat['id']}", headers=h)
     resp_post = c.post(
@@ -191,8 +202,9 @@ def test_ac005_soft_deleted_chat_404(client):
 
 
 def test_ac004_role_defaults_user(client):
-    c, h = client
+    c, h, engine = client
     chat = _create_chat(c, h)
+    _with_ready_file(engine, chat["id"])
     _post_message(c, h, chat["id"], "sem role")
     msgs = c.get(f"/chats/{chat['id']}/messages", headers=h).json()
     user = next(m for m in msgs if m["role"] == "user")
@@ -202,7 +214,7 @@ def test_ac004_role_defaults_user(client):
 
 
 def test_ac003_content_empty_422(client):
-    c, h = client
+    c, h, engine = client
     chat = _create_chat(c, h)
     resp = c.post(
         f"/chats/{chat['id']}/messages", json={"content": ""}, headers=h

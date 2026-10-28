@@ -83,8 +83,8 @@ def test_ac006_read_shape_includes_vector_fields(client):
 def test_ac006_upload_non_text_pending(client):
     c, h = client
     chat = _create_chat(c, h)
-    body = _upload(c, h, chat["id"], name="img.png", content=b"\x89PNG", type_="image/png").json()
-    assert body["status"] == "pending", "arquivo binário aceito e enfileirado"
+    body = _upload(c, h, chat["id"], name="img.txt", content=b"\x89PNG", type_="image/png").json()
+    assert body["status"] == "pending", "arquivo binário (extensão válida) aceito e enfileirado"
 
 
 def test_ac008_get_and_list_keep_vector_fields(client):

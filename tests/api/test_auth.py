@@ -174,8 +174,8 @@ def test_ac006_files_and_messages_isolated(client):
     ).status_code == 404
 
 
-def test_ac007_messages_without_files_still_work(client):
-    # chat sem arquivos: RAG responde com contexto vazio (não quebra)
+def test_ac007_messages_without_files_emit_notice(client):
+    # chat sem arquivos: RAG emite aviso SSE (notice), não chama LLM nem [DONE]
     c, engine = client
     token = _register_and_login(c, "semarq@b.com")
     chat = c.post("/chats", json={"name": "vazio"}, headers=_auth_headers(token)).json()
@@ -185,7 +185,11 @@ def test_ac007_messages_without_files_still_work(client):
         headers=_auth_headers(token),
     )
     assert resp.status_code == 200
-    assert "[DONE]" in resp.text
+    assert "notice" in resp.text, "aviso SSE presente"
+    assert "no_ready_files" in resp.text
+    assert "[DONE]" not in resp.text, "sem fluxo de resposta sem arquivos prontos"
+    msgs = c.get(f"/chats/{chat['id']}/messages", headers=_auth_headers(token)).json()
+    assert all(m["role"] != "assistant" for m in msgs), "nenhuma assistant sem arquivos"
 
 
 def test_ac006_idor_files_by_id_blocked(client):
@@ -221,10 +225,10 @@ def test_ac006_idor_messages_by_id_blocked(client):
         json={"content": "pergunta do dono"},
         headers={**_auth_headers(token_a), "Accept": "text/event-stream"},
     )
-    import re
-    m = re.search(r'data:\s*\{"message_id":\s*(\d+)\}', resp.text)
-    assert m, "message_id presente no SSE"
-    msg_id = int(m.group(1))
+    assert resp.status_code == 200
+    msgs = c.get(f"/chats/{chat_a['id']}/messages", headers=_auth_headers(token_a)).json()
+    user_msg = next(m for m in msgs if m["role"] == "user")
+    msg_id = user_msg["id"]
     assert c.get(f"/messages/{msg_id}", headers=_auth_headers(token_a)).status_code == 200
     assert c.get(f"/messages/{msg_id}", headers=_auth_headers(token_b)).status_code == 404
     assert c.delete(f"/messages/{msg_id}", headers=_auth_headers(token_b)).status_code == 404

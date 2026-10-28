@@ -13,10 +13,12 @@ from einstein_test.api.dependencies import get_session
 from einstein_test.logging_setup import current_request_id, get_logger
 from einstein_test.models import User
 from einstein_test.repositories.chat import ChatRepositorySQLAlchemy
+from einstein_test.repositories.file import FileRepositorySQLAlchemy
 from einstein_test.repositories.message import MessageRepositorySQLAlchemy
 from einstein_test.repositories.user import UserRepositorySQLAlchemy
 from einstein_test.schemas.message import MessageCreate, MessageRead
 from einstein_test.services.chat import ChatNotFoundError, ChatService
+from einstein_test.services.file import FileService
 from einstein_test.services.message import (
     MAX_HISTORY,
     MessageNotFoundError,
@@ -37,6 +39,10 @@ def _chat_service(session: Session) -> ChatService:
 
 def _message_service(session: Session) -> MessageService:
     return MessageService(MessageRepositorySQLAlchemy(session))
+
+
+def _file_service(session: Session) -> FileService:
+    return FileService(FileRepositorySQLAlchemy(session))
 
 
 def _rag_service(session: Session, model: str | None = None) -> RagService:
@@ -80,6 +86,13 @@ async def create_message(
 
     user_message = await _setup()
 
+    async def _file_readiness() -> object:
+        return await run_in_threadpool(_file_service(session).rag_readiness, chat_id)
+
+    readiness = await _file_readiness()
+    processing = readiness.processing
+    failed = readiness.failed
+
     async def _history() -> list[str]:
         def _load() -> list[str]:
             return [
@@ -90,10 +103,47 @@ async def create_message(
 
         return await run_in_threadpool(_load)
 
+    def _notice() -> str:
+        if readiness.code == "no_ready_files":
+            return _sse_event(
+                {
+                    "code": "no_ready_files",
+                    "message": "nenhum arquivo pronto para responder — envie arquivos",
+                },
+                event="notice",
+            )
+        if readiness.code == "partial_files":
+            return _sse_event(
+                {
+                    "code": "partial_files",
+                    "message": "resposta baseada apenas nos arquivos prontos",
+                    "processing": processing,
+                    "failed": failed,
+                },
+                event="notice",
+            )
+        return ""
+
     async def _stream() -> AsyncIterator[str]:
+        if not readiness.can_answer:
+            # AC-001: sem arquivos prontos -> notice SSE, sem LLM, sem assistant
+            yield _notice()
+            logger.info("mensagem sem arquivos prontos", extra={
+                "event": "no_ready_files", "chat_id": chat_id,
+                "message_id": user_message.id, "request_id": request_id,
+            })
+            return
         collected: list[str] = []
         try:
             history = await _history()
+            notice = _notice()
+            if notice:
+                logger.info("aviso de arquivos parciais", extra={
+                    "event": "partial_files_notice", "chat_id": chat_id,
+                    "processing": processing, "failed": failed,
+                    "request_id": request_id,
+                })
+                yield notice
             rag = await run_in_threadpool(_rag_service, session, user_model)
             n_tokens = 0
             async for token in rag.astream(

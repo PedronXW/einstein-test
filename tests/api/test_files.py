@@ -90,16 +90,16 @@ def test_ac004_list_files_isolated_per_chat(client):
 def test_ac004_get_file_by_id(client):
     c, h = client
     chat = _create_chat(c, h)
-    created = _upload(c, h, chat["id"], name="busca.bin", content=b"data").json()
+    created = _upload(c, h, chat["id"], name="busca.txt", content=b"data").json()
     resp = c.get(f"/files/{created['id']}", headers=h)
     assert resp.status_code == 200
-    assert resp.json()["name"] == "busca.bin"
+    assert resp.json()["name"] == "busca.txt"
 
 
 def test_ac004_delete_file(client):
     c, h = client
     chat = _create_chat(c, h)
-    created = _upload(c, h, chat["id"], name="remove.bin", content=b"r").json()
+    created = _upload(c, h, chat["id"], name="remove.txt", content=b"r").json()
     resp = c.delete(f"/files/{created['id']}", headers=h)
     assert resp.status_code == 200
     assert c.get(f"/files/{created['id']}", headers=h).status_code == 404
@@ -110,7 +110,7 @@ def test_ac004_delete_file(client):
 def test_ac004_read_shape(client):
     c, h = client
     chat = _create_chat(c, h)
-    body = _upload(c, h, chat["id"], name="shape.bin", content=b"s").json()
+    body = _upload(c, h, chat["id"], name="shape.txt", content=b"s").json()
     assert {"id", "name", "url", "type", "size", "chat_id", "created_at"} <= set(body)
 
 
@@ -145,10 +145,10 @@ def test_ac004_upload_sanitizes_traversal_name(client):
 
     c, h = client
     chat = _create_chat(c, h)
-    resp = _upload(c, h, chat["id"], name="../../etc/passwd", content=b"x")
+    resp = _upload(c, h, chat["id"], name="../../docs/nota.txt", content=b"x")
     assert resp.status_code == 202
     body = resp.json()
-    assert body["name"] == "passwd", "nome sanitizado (basename)"
+    assert body["name"] == "nota.txt", "nome sanitizado (basename)"
     storage = get_storage()
     assert not any(".." in k for k in storage._objects), "sem traversal na chave"
 

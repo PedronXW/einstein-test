@@ -2,7 +2,7 @@
 
 from einstein_test.vector.chunker import TextChunker
 from einstein_test.vector.embedder import Embedder, FakeEmbedder, OpenAIEmbedder
-from einstein_test.vector.extractor import TextExtractor
+from einstein_test.vector.extractor import TEXT_EXTENSIONS, TextExtractor
 from einstein_test.vector.repository import VectorRepository, VectorRepositorySQLAlchemy
 
 _embedder: Embedder | None = None
@@ -25,6 +25,7 @@ __all__ = [
     "Embedder",
     "FakeEmbedder",
     "OpenAIEmbedder",
+    "TEXT_EXTENSIONS",
     "TextChunker",
     "TextExtractor",
     "VectorRepository",

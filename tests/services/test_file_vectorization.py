@@ -143,7 +143,7 @@ def test_ac005_service_txt_and_pdf_vectorized(service):
 
 def test_ac008_service_non_text_file_empty_chunks(service):
     svc, repo, vec = service
-    file_ = svc.create_file(chat_id=1, name="img.png", content=b"\x89PNG data")
+    file_ = svc.create_file(chat_id=1, name="img.txt", content=b"\x89PNG data")
     assert file_.chunk_ids == [], "arquivo sem texto extraível -> sem vetores"
 
 

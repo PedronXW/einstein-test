@@ -21,6 +21,7 @@ from einstein_test.services.rag import (
     set_rag_factory,
 )
 from einstein_test.vector import FakeEmbedder
+from tests.conftest import seed_ready_file
 
 
 @pytest.fixture
@@ -62,6 +63,7 @@ def client():
 def test_ac004_post_messages_sse_still_works(client):
     c, h, engine = client
     chat = c.post("/chats", json={"name": "Chat"}, headers=h).json()
+    seed_ready_file(engine, chat["id"])
     resp = c.post(
         f"/chats/{chat['id']}/messages",
         json={"content": "pergunta"},
@@ -81,6 +83,7 @@ def test_ac004_sse_many_parallel_requests(client):
     # concorrência: N perguntas em sequência rápida, SSE íntegro por request
     c, h, engine = client
     chat = c.post("/chats", json={"name": "conc"}, headers=h).json()
+    seed_ready_file(engine, chat["id"])
 
     def _ask(i):
         resp = c.post(

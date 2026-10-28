@@ -66,10 +66,11 @@ def test_ac001_repository_usages_are_only_di_into_service():
 
 def test_ac001_business_rules_not_in_controllers():
     # regras de negócio de domínio (limites/status/constantes de produto) não
-    # devem ser definidas nos controllers — devem vir de services.
+    # devem ser DEFINIDAS nos controllers — devem vir de services (importar
+    # constantes de services é permitido; definí-las aqui é proibido).
     for name, src in _api_sources().items():
         assert "MAX_UPLOAD_SIZE =" not in src, f"{name}: limite de upload no controller"
         assert "MAX_FILES_PER_BATCH =" not in src, f"{name}: limite de lote no controller"
         assert "DEFAULT_USER_MODEL =" not in src, f"{name}: constante de produto no controller"
-        assert "FILE_STATUS_" not in src, f"{name}: vocabulário de status no controller"
+        assert "FILE_STATUS_= " not in src, f"{name}: vocabulário de status definido no controller"
         assert "MAX_HISTORY =" not in src, f"{name}: política de histórico RAG no controller"

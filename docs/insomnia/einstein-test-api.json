@@ -266,7 +266,7 @@
       ],
       "authentication": {},
       "metaSortKey": 201,
-      "_description": "Cria a mensagem (role=user) e responde via **RAG** (LangGraph) com **streaming SSE** (F-011). Endpoints são protegidos por **rate limiting** (F-016): exceder o limite → `429` com `Retry-After`.\n\nEventos: `data: \"<token>\"` … `data: {\"message_id\": <id>}` `data: \"[DONE]\"`; erro → `event: error`."
+      "_description": "Cria a mensagem (role=user) e responde via **RAG** (LangGraph) com **streaming SSE** (F-011). Endpoints são protegidos por **rate limiting** (F-016): exceder o limite → `429` com `Retry-After`.\n\n**Contrato (F-034)**: com ao menos um arquivo `ready`, os eventos são `data: \"<token>\"` … `data: {message_id}` `data: \"[DONE]\"`; se houver arquivos `pending`/`error` junto com os prontos, um `event: notice` (`partial_files`) antecede os tokens. **Sem nenhum arquivo pronto**, apenas `event: notice` (`no_ready_files`) é emitido — sem `[DONE]`/`message_id`/`assistant`. Erro → `event: error`."
     },
     {
       "_id": "req_messages_get",
@@ -365,7 +365,7 @@
       ],
       "authentication": {},
       "metaSortKey": 301,
-      "_description": "Faz upload de um arquivo. Retorna **202** com `status=pending`; a vetorização roda em **background** (Celery/Redis, F-015). Consulte `GET /files/:file_id` para ver `status: pending|ready|error`.\n\n**Observação**: `file_path` deve apontar para um arquivo real no seu computador."
+      "_description": "Faz upload de um arquivo. Retorna **202** com `status=pending`; a vetorização roda em **background** (Celery/Redis, F-015). Consulte `GET /files/:file_id` para ver `status: pending|ready|error`.\n\n**Validações (F-034)**: `413` arquivo > 50MB · `422` arquivo vazio (0 bytes) · `415` extensão não permitida (`.pdf` + `text/*`: txt, md, csv, json, py, log) · `409` nome duplicado no chat (case-insensitive).\n\n**Observação**: `file_path` deve apontar para um arquivo real no seu computador."
     },
     {
       "_id": "req_files_upload_batch",
@@ -404,7 +404,7 @@
       ],
       "authentication": {},
       "metaSortKey": 301.5,
-      "_description": "Faz upload de **vários arquivos em uma única chamada** (F-030). Retorna **207 Multi-Status** com `{created: [FileRead...], failures: [{index, name, reason}...]}`. Falha parcial não atômica: arquivos válidos são criados e os inválidos (ex.: > 50MB) vão para `failures`. Máximo de 20 arquivos por chamada (→ `413`).\n\n**Observação**: `file_path`/`file_path_2` devem apontar para arquivos reais. Adicione/remova entradas `files` conforme o lote desejado."
+      "_description": "Faz upload de **vários arquivos em uma única chamada** (F-030). Retorna **207 Multi-Status** com `{created: [FileRead...], failures: [{index, name, reason}...]}`. Falha parcial não atômica: arquivos válidos são criados e os inválidos vão para `failures` com reason (`arquivo muito grande`, `arquivo vazio`, `tipo de arquivo não suportado`, `arquivo duplicado`). Máximo de 20 arquivos por chamada (→ `413`).\n\n**Observação**: `file_path`/`file_path_2` devem apontar para arquivos reais. Adicione/remova entradas `files` conforme o lote desejado."
     },
     {
       "_id": "req_files_get",

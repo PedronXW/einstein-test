@@ -33,6 +33,19 @@ def client():
     engine.dispose()
 
 
+def _seed_ready(chat_id: int) -> None:
+    """Insere um File ready via SessionLocal (helper de teste)."""
+    from einstein_test.models.file import File
+    from einstein_test.api.dependencies import _SessionLocal
+
+    with _SessionLocal() as s:
+        s.add(File(
+            chat_id=chat_id, name="nota.txt", url="s3://einstein/nota.txt",
+            size=5, status="ready",
+        ))
+        s.commit()
+
+
 def test_ac001_user_model_column():
     from einstein_test.models.user import User
     from einstein_test.services.user import DEFAULT_USER_MODEL
@@ -142,6 +155,7 @@ def test_ac005_rag_endpoint_uses_user_model(monkeypatch, client):
     # define o modelo do usuário
     c.patch("/users/me", json={"model": "azure/gpt-6-luna"}, headers=h)
     chat = c.post("/chats", json={"name": "c"}, headers=h).json()
+    _seed_ready(chat["id"])
     resp = c.post(
         f"/chats/{chat['id']}/messages",
         json={"content": "oi"},
@@ -178,6 +192,7 @@ def test_call_time_model_outside_allowlist_uses_default(monkeypatch, client):
     # simulamos a allowlist mudando para não incluir:
     monkeypatch.setenv("ALLOWED_MODELS", "azure/gpt-6-luna")
     chat = c.post("/chats", json={"name": "c"}, headers=h).json()
+    _seed_ready(chat["id"])
     from einstein_test.models.user import User
     from einstein_test.api.dependencies import _SessionLocal
 

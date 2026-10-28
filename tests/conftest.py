@@ -111,3 +111,21 @@ def register_and_login(client: TestClient, email: str, password: str = "senha123
     )
     assert resp.status_code == 200
     return {"Authorization": f"Bearer {resp.json()['access_token']}"}
+
+
+def seed_ready_file(engine, chat_id: int, name: str = "nota.txt") -> int:
+    """Insere um File com status=ready direto no banco (helper de testes).
+
+    Útil para testes de mensagens RAG que precisam de ao menos um arquivo
+    vetorizado (`ready`) para o fluxo normal do LLM rodar.
+    """
+    from einstein_test.models.file import File
+
+    with Session(engine) as s:
+        f = File(
+            chat_id=chat_id, name=name, url=f"s3://einstein/{name}",
+            size=5, status="ready",
+        )
+        s.add(f)
+        s.commit()
+        return f.id

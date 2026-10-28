@@ -11,6 +11,7 @@ from einstein_test.repositories import FileRepository
 from einstein_test.storage import Storage, get_storage, parse_s3_url
 from einstein_test.vector import (
     Embedder,
+    TEXT_EXTENSIONS,
     TextChunker,
     TextExtractor,
     VectorRepository,
@@ -26,6 +27,9 @@ MAX_FILES_PER_BATCH = 20
 FILE_STATUS_PENDING = "pending"
 FILE_STATUS_READY = "ready"
 FILE_STATUS_ERROR = "error"
+
+# Extensões aceitas no upload — alinhadas ao TextExtractor (fonte única).
+SUPPORTED_EXTENSIONS = {".pdf"} | TEXT_EXTENSIONS
 
 
 class BatchFileInput:
@@ -55,12 +59,34 @@ class FileBatchUploadResult:
         self.failures: list[FileUploadFailure] = []
 
 
+class RagReadiness(NamedTuple):
+    """Decisão do RAG sobre o estado dos files do chat (AC-001/AC-002)."""
+
+    can_answer: bool
+    code: str | None
+    ready: int
+    processing: int
+    failed: int
+
+
 class FileNotFound(LookupError):
     """Lançada quando um file não existe."""
 
 
 class FileTooLargeError(ValueError):
     """Lançada quando um arquivo excede MAX_UPLOAD_SIZE."""
+
+
+class EmptyFileError(ValueError):
+    """Lançada quando o arquivo enviado está vazio (0 bytes)."""
+
+
+class UnsupportedFileTypeError(ValueError):
+    """Lançada quando a extensão do arquivo não é suportada pelo extractor."""
+
+
+class DuplicateFileError(ValueError):
+    """Lançada quando um file com o mesmo nome já existe no chat (não deletado)."""
 
 
 class VectorizationError(RuntimeError):
@@ -124,6 +150,20 @@ class FileService:
         chunk_ids = self.vector_repository.insert_chunks(file_id, rows)
         return chunk_ids, reference
 
+    def _validate_upload(self, chat_id: int, name: str, content: bytes) -> str:
+        """Valida o upload e retorna o nome sanitizado. Regras de domínio:
+        não-vazio, extensão permitida e nome não duplicado no chat (não deletado)."""
+        if not content:
+            raise EmptyFileError("arquivo vazio (0 bytes)")
+        safe_name = sanitize_name(name)
+        suffix = PurePath(safe_name).suffix.lower()
+        if suffix not in SUPPORTED_EXTENSIONS:
+            raise UnsupportedFileTypeError("tipo de arquivo não suportado")
+        for existing in self.repository.list(chat_id=chat_id):
+            if existing.name.lower() == safe_name.lower():
+                raise DuplicateFileError("arquivo duplicado no chat")
+        return safe_name
+
     def create_file(
         self,
         chat_id: int,
@@ -137,7 +177,7 @@ class FileService:
             raise FileTooLargeError(
                 f"arquivo excede {MAX_UPLOAD_SIZE} bytes (máximo por arquivo)"
             )
-        safe_name = sanitize_name(name)
+        safe_name = self._validate_upload(chat_id, name, content)
         object_key = key or f"chats/{chat_id}/{uuid.uuid4().hex}/{safe_name}"
         url = self.storage.upload(
             self.storage.bucket, object_key, content, content_type=content_type
@@ -186,6 +226,23 @@ class FileService:
                     content=upload.content,
                     content_type=upload.content_type,
                 )
+            except EmptyFileError:
+                result.failures.append(
+                    FileUploadFailure(index, safe_name, "arquivo vazio")
+                )
+                continue
+            except UnsupportedFileTypeError:
+                result.failures.append(
+                    FileUploadFailure(
+                        index, safe_name, "tipo de arquivo não suportado"
+                    )
+                )
+                continue
+            except DuplicateFileError:
+                result.failures.append(
+                    FileUploadFailure(index, safe_name, "arquivo duplicado")
+                )
+                continue
             except Exception:  # noqa: BLE001
                 logger.warning("falha ao criar arquivo no lote", extra={
                     "event": "batch_file_failed", "chat_id": chat_id,
@@ -206,6 +263,44 @@ class FileService:
 
     def list_files(self, chat_id: int) -> list[File]:
         return self.repository.list(chat_id=chat_id)
+
+    def files_state(self, chat_id: int) -> dict[str, int]:
+        """Contagens de status dos files do chat (ready/pending/error)."""
+        state = {
+            FILE_STATUS_READY: 0,
+            FILE_STATUS_PENDING: 0,
+            FILE_STATUS_ERROR: 0,
+        }
+        for f in self.repository.list(chat_id=chat_id):
+            if f.status in state:
+                state[f.status] += 1
+        return state
+
+    def rag_readiness(self, chat_id: int) -> RagReadiness:
+        """Decisão de negócio do RAG sobre o estado dos files do chat.
+
+        Centraliza a regra AC-001/AC-002: pode responder (há ao menos um file
+        `ready`) e o código do aviso (`no_ready_files`/`partial_files`/None).
+        O controller apenas consome e traduz para SSE.
+        """
+        state = self.files_state(chat_id)
+        ready = state[FILE_STATUS_READY]
+        processing = state[FILE_STATUS_PENDING]
+        failed = state[FILE_STATUS_ERROR]
+        can_answer = ready > 0
+        if not can_answer:
+            code = "no_ready_files"
+        elif processing or failed:
+            code = "partial_files"
+        else:
+            code = None
+        return RagReadiness(
+            can_answer=can_answer,
+            code=code,
+            ready=ready,
+            processing=processing,
+            failed=failed,
+        )
 
     def delete_file(self, file_id: int) -> None:
         file_ = self.repository.get_by_id(file_id)

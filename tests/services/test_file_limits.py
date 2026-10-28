@@ -50,7 +50,7 @@ def test_ac004_create_file_validates_max_upload_size(monkeypatch):
     monkeypatch.setattr(file_service, "MAX_UPLOAD_SIZE", 4)
     service = FileService(_FakeFileRepository(), InMemoryStorage())
     with pytest.raises(FileTooLargeError):
-        service.create_file(chat_id=1, name="big.bin", content=b"x" * 100)
+        service.create_file(chat_id=1, name="big.txt", content=b"x" * 100)
 
 
 def test_ac004_create_file_accepts_at_limit(monkeypatch):
@@ -58,7 +58,7 @@ def test_ac004_create_file_accepts_at_limit(monkeypatch):
 
     monkeypatch.setattr(file_service, "MAX_UPLOAD_SIZE", 4)
     service = FileService(_FakeFileRepository(), InMemoryStorage())
-    file_ = service.create_file(chat_id=1, name="ok.bin", content=b"abcd")
+    file_ = service.create_file(chat_id=1, name="ok.txt", content=b"abcd")
     assert file_.size == 4
 
 
