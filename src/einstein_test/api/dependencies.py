@@ -3,10 +3,10 @@
 import threading
 from collections.abc import Iterator
 
-from sqlalchemy import Engine, create_engine, make_url
+from sqlalchemy import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from einstein_test.settings import get_settings
+from einstein_test.db.engine import create_engine_from_config
 
 DEFAULT_DATABASE_URL = "postgresql://einstein:einstein@localhost:5432/einstein"
 DEFAULT_POOL_SIZE = 10
@@ -15,26 +15,6 @@ DEFAULT_POOL_TIMEOUT = 30
 
 _SessionLocal: sessionmaker | None = None
 _lock = threading.Lock()
-
-
-def create_engine_from_config(url: str | None = None) -> Engine:
-    """Cria o engine a partir de Settings (pool configurável).
-
-    No Postgres (QueuePool) aplica pool_size/max_overflow/pool_timeout. Em
-    SQLite, esses parâmetros são omitidos (dialect usa SingletonThreadPool/
-    StaticPool, que não os aceita).
-    """
-    cfg = get_settings()
-    url = url or cfg.database_url
-    if make_url(url).get_backend_name() == "sqlite":
-        return create_engine(url, pool_pre_ping=True)
-    return create_engine(
-        url,
-        pool_pre_ping=True,
-        pool_size=cfg.database_pool_size,
-        max_overflow=cfg.database_max_overflow,
-        pool_timeout=cfg.database_pool_timeout,
-    )
 
 
 def configure_session_factory(bind: Engine | str) -> None:
