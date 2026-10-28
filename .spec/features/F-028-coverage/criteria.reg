@@ -1,0 +1,5 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-001	pytest-cov em dev deps; pyproject.toml [tool.coverage.run]+[tool.coverage.report] com fail_under (70) e omit de infra; uv run pytest --cov=einstein_test funciona	T-SPEC
+AC-002	U-002	CI roda pytest -m "not integration" --cov=einstein_test --cov-fail-under=70; falha se abaixo	T-SPEC
+AC-003	U-003	CI gera --cov-report=html + --cov-report=term e faz upload do HTML como artefato	T-SPEC
+AC-004	U-001	teste local: pytest --cov nao quebra a suite; threshold atingido (ajustado/omit documentado)	T-SPEC

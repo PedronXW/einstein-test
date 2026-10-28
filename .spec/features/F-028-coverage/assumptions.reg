@@ -1,0 +1,4 @@
+#id	tipo	status	texto
+A-001	A	confirmada	pytest-cov + fail_under (70% inicial)
+A-002	A	confirmada	CI com --cov-fail-under e artefato HTML
+A-003	A	confirmada	Omit de modulos de infra/pouco cobertos quando justificado
