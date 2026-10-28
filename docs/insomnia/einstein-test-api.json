@@ -75,7 +75,8 @@
         "chat_id": "1",
         "message_id": "1",
         "file_id": "1",
-        "file_path": "C:/caminho/para/arquivo.txt",
+        "file_path": "C:/caminho/para/arquivo1.txt",
+        "file_path_2": "C:/caminho/para/arquivo2.txt",
         "auth_token": ""
       },
       "dataPropertyOrder": {
@@ -85,6 +86,7 @@
           "message_id",
           "file_id",
           "file_path",
+          "file_path_2",
           "auth_token"
         ]
       }
@@ -364,6 +366,45 @@
       "authentication": {},
       "metaSortKey": 301,
       "_description": "Faz upload de um arquivo. Retorna **202** com `status=pending`; a vetorização roda em **background** (Celery/Redis, F-015). Consulte `GET /files/:file_id` para ver `status: pending|ready|error`.\n\n**Observação**: `file_path` deve apontar para um arquivo real no seu computador."
+    },
+    {
+      "_id": "req_files_upload_batch",
+      "parentId": "grp_files",
+      "type": "request",
+      "_type": "request",
+      "name": "POST /chats/:chat_id/files/batch — Upload múltiplo (207)",
+      "method": "POST",
+      "url": "{{ base_url }}/chats/{{ chat_id }}/files/batch",
+      "body": {
+        "mimeType": "multipart/form-data",
+        "parameters": [
+          {
+            "name": "files",
+            "value": "{{ file_path }}",
+            "fileName": "{{ file_path }}",
+            "type": "file",
+            "id": "file_upload_batch_param1"
+          },
+          {
+            "name": "files",
+            "value": "{{ file_path_2 }}",
+            "fileName": "{{ file_path_2 }}",
+            "type": "file",
+            "id": "file_upload_batch_param2"
+          }
+        ]
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ auth_token }}",
+          "id": "hdr_auth_req_files_upload_batch"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 301.5,
+      "_description": "Faz upload de **vários arquivos em uma única chamada** (F-030). Retorna **207 Multi-Status** com `{created: [FileRead...], failures: [{index, name, reason}...]}`. Falha parcial não atômica: arquivos válidos são criados e os inválidos (ex.: > 50MB) vão para `failures`. Máximo de 20 arquivos por chamada (→ `413`).\n\n**Observação**: `file_path`/`file_path_2` devem apontar para arquivos reais. Adicione/remova entradas `files` conforme o lote desejado."
     },
     {
       "_id": "req_files_get",

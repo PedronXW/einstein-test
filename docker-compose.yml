@@ -58,12 +58,13 @@ services:
 
   api:
     build: .
-    command: ["sh", "-c", ".venv/bin/uvicorn einstein_test.main:create_app --host 0.0.0.0 --port 8000 --workers $API_WORKERS --factory"]
+    command: ["sh", "-c", ".venv/bin/uvicorn einstein_test.main:create_app --host 0.0.0.0 --port 8000 --workers $${API_WORKERS:-1} --factory"]
     ports:
       - "127.0.0.1:8000:8000"
     environment:
       API_WORKERS: ${API_WORKERS:-1}
       RATE_LIMIT_BACKEND: ${RATE_LIMIT_BACKEND:-memory}
+      MINIO_ENDPOINT: http://minio:9000
       DATABASE_URL: postgresql://einstein:einstein@postgres:5432/einstein
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
@@ -92,6 +93,7 @@ services:
     build: .
     command: [".venv/bin/celery", "-A", "einstein_test.tasks", "worker", "--loglevel=info"]
     environment:
+      MINIO_ENDPOINT: http://minio:9000
       DATABASE_URL: postgresql://einstein:einstein@postgres:5432/einstein
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0

@@ -2,7 +2,7 @@ import os
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+from sqlalchemy import pool, text
 
 from alembic import context
 
@@ -60,6 +60,8 @@ def run_migrations_online() -> None:
     In this scenario we need to create an Engine
     and associate a connection with the context.
 
+    Serializa migrações entre processos (api/worker/replicas) via advisory
+    lock do Postgres — evita corrida de `upgrade head` simultâneos no boot.
     """
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
@@ -68,12 +70,23 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        if connection.dialect.name == "postgresql":
+            connection.execute(text("SELECT pg_advisory_lock(hashtext('einstein_alembic'))"))
+            try:
+                _run(connection)
+            finally:
+                connection.execute(text("SELECT pg_advisory_unlock(hashtext('einstein_alembic'))"))
+        else:
+            _run(connection)
 
-        with context.begin_transaction():
-            context.run_migrations()
+
+def _run(connection) -> None:
+    context.configure(
+        connection=connection, target_metadata=target_metadata
+    )
+
+    with context.begin_transaction():
+        context.run_migrations()
 
 
 if context.is_offline_mode():

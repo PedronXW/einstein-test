@@ -1,5 +1,8 @@
 """Aplicação FastAPI."""
 
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from uvicorn import run as uvicorn_run
 
@@ -14,10 +17,19 @@ from einstein_test.middleware.rate_limit import RateLimitMiddleware
 from einstein_test.settings import validate_settings
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Startup: garante o bucket do storage (cria se não existir)."""
+    from einstein_test.storage import get_storage
+
+    get_storage().ensure_bucket()
+    yield
+
+
 def create_app() -> FastAPI:
     validate_settings()  # fails fast: config obrigatória ausente/inválida
     configure_logging()
-    app = FastAPI(title="einstein-test")
+    app = FastAPI(title="einstein-test", lifespan=lifespan)
     # ordem: RequestId externo (captura 429 do rate limit e 500), depois rate limit
     app.add_middleware(RateLimitMiddleware)
     app.add_middleware(RequestIdMiddleware)

@@ -5,7 +5,9 @@ Duas mudanças no `docker-compose.yml`:
 1. **Removido o `minio-init`** (imagem `minio/mc`) — causava erro de pull
    (`pull access denied` no registry deste ambiente). O **MinIO
    (`minio/minio:latest`) é mantido** com mesmas portas/credenciais/volume/
-   healthcheck; o bucket `einstein` agora se cria manualmente.
+   healthcheck; o bucket `einstein` agora se cria manualmente, ou
+   automaticamente no startup da API via `MinioStorage.ensure_bucket`
+   (cria se não existir, de forma idempotente).
 2. **Postgres vetorizado**: `postgres:16-alpine` → **`ankane/pgvector:latest`**
    (PostgreSQL 15.4 + extensão `vector`), para embeddings futuros. O init do
    banco de teste (F-001) continua.

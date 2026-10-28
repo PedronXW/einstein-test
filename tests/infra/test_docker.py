@@ -62,3 +62,43 @@ def test_ac004_compose_config_parses():
     p = ROOT / "docker-compose.yml"
     yaml.safe_load(p.read_text())  # não levanta
     assert True
+
+
+def test_entrypoint_runs_migrations_before_command():
+    p = ROOT / "docker/entrypoint.sh"
+    assert p.exists(), "docker/entrypoint.sh existe"
+    content = p.read_text()
+    assert "alembic upgrade head" in content, "entrypoint roda migrations"
+    assert 'exec "$@"' in content, "entrypoint executa o comando real depois"
+    assert p.stat().st_mode & 0o111, "entrypoint é executável"
+
+
+def test_dockerfile_copies_alembic_and_sets_entrypoint():
+    content = (ROOT / "Dockerfile").read_text()
+    assert "COPY alembic.ini" in content, "alembic.ini copiado para a imagem"
+    assert "COPY alembic" in content, "diretório alembic/ copiado"
+    assert "ENTRYPOINT" in content, "Dockerfile define ENTRYPOINT (migrations)"
+    assert "alembic.ini" in content, "alembic.ini referenciado"
+
+
+def test_alembic_versions_are_copied_to_image():
+    # garante que os migration files existem para serem copiados pelo Dockerfile
+    versions = ROOT / "alembic" / "versions"
+    assert versions.exists(), "diretório alembic/versions existe"
+    assert list(versions.glob("*.py")), "há revisões alembic"
+
+
+def test_compose_minio_endpoint_internal():
+    data = yaml.safe_load((ROOT / "docker-compose.yml").read_text())
+    for svc in ("api", "worker"):
+        env = data["services"][svc].get("environment", {})
+        assert env.get("MINIO_ENDPOINT") == "http://minio:9000", (
+            f"{svc} aponta para o MinIO via hostname interno da rede"
+        )
+
+
+def test_compose_api_workers_fallback_not_interpolated():
+    src = (ROOT / "docker-compose.yml").read_text()
+    assert "$${API_WORKERS:-1}" in src, (
+        "`$` escapado para o compose não interpolar vazio no command do api"
+    )

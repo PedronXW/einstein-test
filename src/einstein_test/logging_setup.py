@@ -39,7 +39,7 @@ _configured = False
 _KNOWN_FIELDS = (
     "request_id", "event", "chat_id", "file_id", "message_id", "attempt",
     "status", "latency_ms", "user_id", "method", "path", "n_tokens",
-    "question_len", "retry_in", "error", "endpoint", "ip",
+    "question_len", "retry_in", "error", "endpoint", "ip", "bucket",
 )
 
 

@@ -47,6 +47,20 @@ def _mock_enqueue(monkeypatch):
     monkeypatch.setattr(files_api, "enqueue_vectorization", _queued_file_ids.append)
 
 
+@pytest.fixture(autouse=True)
+def _storage_fake():
+    """Usa storage em memória (sem MinIO) em todos os testes.
+
+    O lifespan do create_app chama `ensure_bucket` no startup; sem este fake,
+    `get_storage()` criaria um MinioStorage real e cada teste tentaria conectar
+    no MinIO. Testes que precisam de storage específico fazem `set_storage`
+    explicitamente na própria fixture.
+    """
+    from einstein_test.storage import InMemoryStorage, set_storage
+
+    set_storage(InMemoryStorage())
+
+
 @pytest.fixture
 def enqueue_spy() -> list[int]:
     """Lista dos file_ids enfileirados nos uploads (mock da fila)."""

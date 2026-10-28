@@ -10,6 +10,9 @@ class InMemoryStorage:
     def __init__(self) -> None:
         self._objects: dict[str, bytes] = {}
 
+    def ensure_bucket(self, name: str | None = None) -> None:
+        """Nada a garantir — o storage em memória sempre 'tem' o bucket."""
+
     def upload(
         self, bucket: str, path: str, content: bytes, content_type: str | None = None
     ) -> str:
