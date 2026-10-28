@@ -34,7 +34,8 @@ def client():
 
 
 def test_ac001_user_model_column():
-    from einstein_test.models.user import DEFAULT_USER_MODEL, User
+    from einstein_test.models.user import User
+    from einstein_test.services.user import DEFAULT_USER_MODEL
 
     assert "model" in User.__table__.c, "User.model existe"
     assert User.__table__.c.model.nullable is True, "coluna nullable"

@@ -76,7 +76,7 @@ def test_ac002_search_similar_still_works_after_index():
             ],
         )
         chunks = vrepo.search_similar(
-            embedding=[0.9, 0.1, 0.0], chat_id=chat.id, max_chunks=1
+            embedding=[0.9, 0.1, 0.0], chat_id=chat.id, chunks_per_file=2, max_chunks=1
         )
         assert len(chunks) == 1
         assert "gorilas" in chunks[0].content, "busca preservada (fallback sqlite)"

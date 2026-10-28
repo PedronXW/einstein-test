@@ -13,10 +13,10 @@ from sqlalchemy.orm import Session
 
 from einstein_test.db.base import Base
 from einstein_test.models.file import File
-from einstein_test.repositories import FileRepositorySQLAlchemy, VectorRepositorySQLAlchemy
+from einstein_test.repositories.file import FileRepositorySQLAlchemy
 from einstein_test.services.file import FileService
 from einstein_test.storage import InMemoryStorage
-from einstein_test.vector import FakeEmbedder, TextChunker, TextExtractor
+from einstein_test.vector import FakeEmbedder, TextChunker, TextExtractor, VectorRepositorySQLAlchemy
 
 
 class _FakeFileRepository:

@@ -29,9 +29,9 @@ def env(monkeypatch, tmp_path):
     set_embedder(FakeEmbedder())
 
     monkeypatch.setenv("DATABASE_URL", f"sqlite:///{db_file}")
-    import einstein_test.api.dependencies as deps
+    import einstein_test.db.engine as db_engine
 
-    monkeypatch.setattr(deps, "create_engine_from_config", lambda url=None: engine)
+    monkeypatch.setattr(db_engine, "create_engine_from_config", lambda url=None: engine)
 
     # eager: .apply executa de forma síncrona (com retry se configurado)
     celery_app.conf.task_always_eager = True

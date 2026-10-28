@@ -33,13 +33,10 @@ def env(monkeypatch, tmp_path):
     # a task abre seu próprio engine via create_engine_from_config(); forçamos
     # o mesmo sqlite de arquivo via DATABASE_URL e monkeypatch do engine.
     monkeypatch.setenv("DATABASE_URL", f"sqlite:///{db_file}")
-    # task usa create_engine_from_config -> force monkeypatch para o engine
-    import einstein_test.api.dependencies as deps
+    # task usa create_engine_from_config (db/engine) -> force monkeypatch
+    import einstein_test.db.engine as db_engine
 
-    def _engine(url=None):
-        return engine
-
-    monkeypatch.setattr(deps, "create_engine_from_config", _engine)
+    monkeypatch.setattr(db_engine, "create_engine_from_config", lambda url=None: engine)
 
     yield {"engine": engine, "storage": storage, "db_file": db_file,
            "task": vectorize_file}

@@ -10,7 +10,8 @@ from sqlalchemy.orm import Session
 
 from einstein_test.db.base import Base
 from einstein_test.models import User
-from einstein_test.repositories.user import UserRepositorySQLAlchemy, hash_password, verify_password
+from einstein_test.repositories.user import UserRepositorySQLAlchemy
+from einstein_test.security import hash_password, verify_password
 
 
 @pytest.fixture
@@ -52,7 +53,7 @@ def test_ac001_bcrypt_hash_is_salted():
 
 def test_ac001_repo_create_and_fetch_by_email(session):
     repo = UserRepositorySQLAlchemy(session)
-    user = repo.create(email="a@b.com", password="123456")
+    user = repo.create(email="a@b.com", password_hash=hash_password("123456"))
     assert user.id is not None
     assert user.email == "a@b.com"
     assert user.password_hash != "123456"
@@ -64,6 +65,6 @@ def test_ac001_repo_create_and_fetch_by_email(session):
 
 def test_ac001_repo_duplicate_email_raises(session):
     repo = UserRepositorySQLAlchemy(session)
-    repo.create(email="dup@b.com", password="123456")
+    repo.create(email="dup@b.com", password_hash=hash_password("123456"))
     with pytest.raises(Exception):
-        repo.create(email="dup@b.com", password="654321")
+        repo.create(email="dup@b.com", password_hash=hash_password("654321"))

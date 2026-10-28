@@ -91,9 +91,13 @@ def test_ac001_search_filters_chat_only():
     with Session(engine) as session:
         vrepo = VectorRepositorySQLAlchemy(session)
         query = [1.0, 0.0, 0.0]
-        chunks = vrepo.search_similar(embedding=query, chat_id=chat_id)
+        chunks = vrepo.search_similar(
+            embedding=query, chat_id=chat_id, chunks_per_file=2, max_chunks=12
+        )
         assert all(c.file_id in (f1_id, f2_id) for c in chunks)
-        other = vrepo.search_similar(embedding=query, chat_id=other_chat_id)
+        other = vrepo.search_similar(
+            embedding=query, chat_id=other_chat_id, chunks_per_file=2, max_chunks=12
+        )
         assert all(c.file_id == f3_id for c in other)
     engine.dispose()
 
