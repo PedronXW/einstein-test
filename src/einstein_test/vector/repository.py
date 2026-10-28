@@ -8,9 +8,6 @@ from sqlalchemy.orm import Session, aliased
 from einstein_test.models.file import File
 from einstein_test.models.file_chunk import FileChunk
 
-DEFAULT_CHUNKS_PER_FILE = 2
-DEFAULT_MAX_CHUNKS = 12
-
 
 class VectorRepository(Protocol):
     def insert_chunks(
@@ -22,8 +19,8 @@ class VectorRepository(Protocol):
         self,
         embedding: list[float],
         chat_id: int,
-        chunks_per_file: int = DEFAULT_CHUNKS_PER_FILE,
-        max_chunks: int = DEFAULT_MAX_CHUNKS,
+        chunks_per_file: int,
+        max_chunks: int,
     ) -> list[FileChunk]: ...
 
 
@@ -69,8 +66,8 @@ class VectorRepositorySQLAlchemy:
         self,
         embedding: list[float],
         chat_id: int,
-        chunks_per_file: int = DEFAULT_CHUNKS_PER_FILE,
-        max_chunks: int = DEFAULT_MAX_CHUNKS,
+        chunks_per_file: int,
+        max_chunks: int,
     ) -> list[FileChunk]:
         """Busca os chunks mais similares por arquivo do chat.
 
