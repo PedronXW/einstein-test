@@ -3,7 +3,9 @@
 import re
 import uuid
 from pathlib import PurePath
+from typing import NamedTuple
 
+from einstein_test.logging_setup import get_logger
 from einstein_test.models.file import File
 from einstein_test.repositories import FileRepository
 from einstein_test.storage import Storage, get_storage
@@ -15,12 +17,37 @@ from einstein_test.vector import (
     get_embedder,
 )
 
-SAFE_NAME_PATTERN = re.compile(r"^[\w.\- ]{1,255}$")
+logger = get_logger("services.file")
 
-
+MAX_UPLOAD_SIZE = 50 * 1024 * 1024  # 50 MB
 MAX_CHUNKS = 500
 
-SAFE_NAME_PATTERN = re.compile(r"^[\w.\- ]{1,255}$")
+
+class BatchFileInput:
+    """Entrada de um arquivo candidato a upload (conteúdo já lido)."""
+
+    __slots__ = ("name", "content", "content_type")
+
+    def __init__(self, name: str, content: bytes, content_type: str | None) -> None:
+        self.name = name
+        self.content = content
+        self.content_type = content_type
+
+
+class FileUploadFailure(NamedTuple):
+    """Falha de um arquivo individual dentro de um upload em lote."""
+
+    index: int
+    name: str
+    reason: str
+
+
+class FileBatchUploadResult:
+    """Resultado parcial do upload em lote: criados + falhas por arquivo."""
+
+    def __init__(self) -> None:
+        self.created: list[File] = []
+        self.failures: list[FileUploadFailure] = []
 
 
 class FileNotFound(LookupError):
@@ -119,6 +146,42 @@ class FileService:
         except Exception:
             self.storage.delete(self.storage.bucket, object_key)
             raise
+
+    def create_files_batch(
+        self,
+        chat_id: int,
+        uploads: list[BatchFileInput],
+    ) -> FileBatchUploadResult:
+        """Cria um lote de arquivos (não atômico): válidos viram File criado,
+        inválidos viram FileUploadFailure(index, name, reason) — nunca lança
+        exceção por arquivo individual, o lote inteiro prossegue.
+        """
+        result = FileBatchUploadResult()
+        for index, upload in enumerate(uploads):
+            safe_name = sanitize_name(upload.name)
+            if len(upload.content) > MAX_UPLOAD_SIZE:
+                result.failures.append(
+                    FileUploadFailure(index, safe_name, "arquivo muito grande")
+                )
+                continue
+            try:
+                file_ = self.create_file(
+                    chat_id=chat_id,
+                    name=safe_name,
+                    content=upload.content,
+                    content_type=upload.content_type,
+                )
+            except Exception:  # noqa: BLE001
+                logger.warning("falha ao criar arquivo no lote", extra={
+                    "event": "batch_file_failed", "chat_id": chat_id,
+                    "index": index, "file_name": safe_name,
+                })
+                result.failures.append(
+                    FileUploadFailure(index, safe_name, "falha ao processar arquivo")
+                )
+                continue
+            result.created.append(file_)
+        return result
 
     def get_file(self, file_id: int) -> File:
         file_ = self.repository.get_by_id(file_id)

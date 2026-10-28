@@ -13,7 +13,13 @@ from sqlalchemy.orm import Session
 from einstein_test.db.base import Base
 from einstein_test.models.file import File
 from einstein_test.repositories import FileRepositorySQLAlchemy
-from einstein_test.services.file import FileNotFound, FileService
+from einstein_test.services.file import (
+    BatchFileInput,
+    FileBatchUploadResult,
+    FileNotFound,
+    FileService,
+    FileUploadFailure,
+)
 from einstein_test.storage import InMemoryStorage, MinioStorage, Storage
 
 
@@ -145,6 +151,56 @@ def test_ac002_service_delete_unknown_raises():
     service = FileService(_FakeFileRepository(), InMemoryStorage())
     with pytest.raises(FileNotFound):
         service.delete_file(999999)
+
+
+def test_batch_all_valid_creates_each_file():
+    repo = _FakeFileRepository()
+    service = FileService(repo, InMemoryStorage())
+    result = service.create_files_batch(chat_id=1, uploads=[
+        BatchFileInput("a.txt", b"aaa", "text/plain"),
+        BatchFileInput("b.pdf", b"%PDF", "application/pdf"),
+    ])
+    assert isinstance(result, FileBatchUploadResult)
+    assert [f.name for f in result.created] == ["a.txt", "b.pdf"]
+    assert result.failures == []
+    assert len(service.list_files(chat_id=1)) == 2
+
+
+def test_batch_over_limit_is_failure_not_creation(monkeypatch):
+    import einstein_test.services.file as file_service
+
+    monkeypatch.setattr(file_service, "MAX_UPLOAD_SIZE", 4)
+    repo = _FakeFileRepository()
+    service = FileService(repo, InMemoryStorage())
+    result = service.create_files_batch(chat_id=1, uploads=[
+        BatchFileInput("ok.txt", b"abc", "text/plain"),
+        BatchFileInput("big.txt", b"x" * 100, "text/plain"),
+    ])
+    assert [f.name for f in result.created] == ["ok.txt"]
+    assert result.failures == [
+        FileUploadFailure(1, "big.txt", "arquivo muito grande")
+    ]
+    assert len(service.list_files(chat_id=1)) == 1
+
+
+def test_batch_exception_maps_to_failure(monkeypatch):
+    repo = _FakeFileRepository()
+    storage = InMemoryStorage()
+    service = FileService(repo, storage)
+
+    def _boom(**kwargs):
+        raise RuntimeError("storage fora do ar")
+
+    monkeypatch.setattr(repo, "create", _boom)
+    result = service.create_files_batch(chat_id=1, uploads=[
+        BatchFileInput("a.txt", b"aaa", "text/plain"),
+        BatchFileInput("b.txt", b"bb", "text/plain"),
+    ])
+    assert result.created == []
+    assert result.failures == [
+        FileUploadFailure(0, "a.txt", "falha ao processar arquivo"),
+        FileUploadFailure(1, "b.txt", "falha ao processar arquivo"),
+    ]
 
 
 def test_ac003_storage_is_protocol():

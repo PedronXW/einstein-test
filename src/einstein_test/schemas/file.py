@@ -19,3 +19,14 @@ class FileRead(BaseModel):
     status: str = "pending"
     error_detail: str | None = None
     created_at: datetime
+
+
+class FileBatchFailure(BaseModel):
+    index: int = Field(ge=0)
+    name: str
+    reason: str
+
+
+class FileBatchResult(BaseModel):
+    created: list[FileRead] = Field(default_factory=list)
+    failures: list[FileBatchFailure] = Field(default_factory=list)

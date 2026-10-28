@@ -1,6 +1,6 @@
 """Endpoints REST de file."""
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
@@ -10,15 +10,20 @@ from einstein_test.logging_setup import get_logger
 from einstein_test.models import User
 from einstein_test.repositories.chat import ChatRepositorySQLAlchemy
 from einstein_test.repositories.file import FileRepositorySQLAlchemy
-from einstein_test.schemas.file import FileRead
+from einstein_test.schemas.file import FileBatchFailure, FileBatchResult, FileRead
 from einstein_test.services.chat import ChatNotFoundError, ChatService
-from einstein_test.services.file import FileNotFound, FileService
+from einstein_test.services.file import (
+    MAX_UPLOAD_SIZE,
+    BatchFileInput,
+    FileNotFound,
+    FileService,
+)
 
 logger = get_logger("api.files")
 
 router = APIRouter(tags=["files"])
 
-MAX_UPLOAD_SIZE = 50 * 1024 * 1024  # 50 MB
+MAX_FILES_PER_BATCH = 20
 
 
 def _chat_service(session: Session) -> ChatService:
@@ -86,6 +91,47 @@ async def upload_file(
     # vetorização em background
     await run_in_threadpool(enqueue_vectorization, created.id)
     return created
+
+
+@router.post(
+    "/chats/{chat_id}/files/batch",
+    response_model=FileBatchResult,
+    status_code=207,
+)
+async def upload_files_batch(
+    chat_id: int,
+    files: list[UploadFile] = File(...),
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+) -> FileBatchResult:
+    try:
+        _ensure_chat_owned(session, chat_id, current_user.id)
+    except ChatNotFoundError:
+        raise HTTPException(status_code=404, detail="chat não encontrado") from None
+    if len(files) > MAX_FILES_PER_BATCH:
+        raise HTTPException(
+            status_code=413,
+            detail=f"máximo de {MAX_FILES_PER_BATCH} arquivos por chamada",
+        )
+    service = _file_service(session)
+    uploads = [
+        BatchFileInput(
+            name=f.filename or "arquivo",
+            content=await f.read(MAX_UPLOAD_SIZE + 1),
+            content_type=f.content_type,
+        )
+        for f in files
+    ]
+    result = await run_in_threadpool(service.create_files_batch, chat_id, uploads)
+    for file_ in result.created:
+        await run_in_threadpool(enqueue_vectorization, file_.id)
+    return FileBatchResult(
+        created=[FileRead.model_validate(f) for f in result.created],
+        failures=[
+            FileBatchFailure(index=fr.index, name=fr.name, reason=fr.reason)
+            for fr in result.failures
+        ],
+    )
 
 
 @router.get("/chats/{chat_id}/files", response_model=list[FileRead])
