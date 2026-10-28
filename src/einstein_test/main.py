@@ -30,6 +30,15 @@ def create_app() -> FastAPI:
 
 
 def main() -> None:
-    """Entrypoint CLI: `einstein-test` levanta uvicorn con la app."""
-    app = create_app()
-    uvicorn_run(app, host="0.0.0.0", port=8000, reload=True)
+    """Entrypoint CLI: `einstein-test` levanta uvicorn (com a factory).
+
+    Usa `factory=True` + string importável (necessário para `reload`/`workers`)
+    e roda o fails-fast do `validate_settings` no startup do worker.
+    """
+    uvicorn_run(
+        "einstein_test.main:create_app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True,
+        factory=True,
+    )
