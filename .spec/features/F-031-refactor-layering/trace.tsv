@@ -1,0 +1,9 @@
+#AC-id	comando-teste	T-id	status	sha	strict
+AC-001	uv run pytest tests/services/test_user_service.py -q -k 'ac001'	T-SPEC	proven	f701313	0
+AC-002	uv run pytest tests/services/test_security.py -q -k 'ac002'	T-SPEC	proven	f701313	0
+AC-003	uv run pytest tests/services/test_layering_domain.py -q -k 'ac003'	T-SPEC	proven	f701313	0
+AC-004	uv run pytest tests/services/test_file_limits.py -q -k 'ac004'	T-SPEC	proven	f701313	0
+AC-005	uv run pytest tests/services/test_file_vectorize_uploaded.py -q -k 'ac005'	T-SPEC	proven	f701313	0
+AC-006	uv run pytest tests/services/test_engine_layer.py -q -k 'ac006'	T-SPEC	proven	f701313	0
+AC-007	uv run pytest tests/services/test_layering_domain.py -q -k 'ac007'	T-SPEC	proven	f701313	0
+AC-008	uv run pytest tests/services/test_layering_domain.py tests/services/test_layering_minor.py -q -k 'ac008'	T-SPEC	proven	f701313	0

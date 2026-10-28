@@ -1,0 +1,5 @@
+#id	tipo	status	texto
+A-001	A	confirmed	soft-delete (deleted_at) permanece no repository como convencao de persistencia
+A-002	A	confirmed	ranking top-K permanece no repo; apenas defaults de dominio saem (quem chama passa explicitamente)
+A-003	A	confirmed	get_current_user continua retornando model User, mas acesso a dados via UserService
+A-004	A	confirmed	mudanca 100% estrutural: nenhum contrato HTTP/dados muda
