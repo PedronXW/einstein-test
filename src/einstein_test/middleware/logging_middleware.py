@@ -14,7 +14,6 @@ from starlette.requests import Request
 from starlette.responses import Response
 
 from einstein_test.logging_setup import (
-    current_request_id,
     get_logger,
     request_id_var,
 )

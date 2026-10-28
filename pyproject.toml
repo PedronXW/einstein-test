@@ -40,6 +40,8 @@ build-backend = "uv_build"
 dev = [
     "anyio>=4.15.1",
     "pytest>=9.1.1",
+    "pyyaml>=6.0.3",
+    "ruff>=0.17.3",
 ]
 
 [tool.pytest.ini_options]
@@ -48,3 +50,12 @@ markers = [
     "integration: testes end-to-end com provedor real (requer OPENAI_API_KEY + RUN_INTEGRATION=1 + infra)",
 ]
 addopts = "-m \"not integration\""
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["F", "E9"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/einstein_test/models/**" = ["F401"]

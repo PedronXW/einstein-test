@@ -77,7 +77,7 @@ def test_ac001_get_logger_returns_logger():
 
 
 def test_ac002_middleware_returns_x_request_id(client):
-    app = client.app if hasattr(client, "app") else None
+    client.app if hasattr(client, "app") else None
     resp = client.get("/docs")
     assert resp.status_code == 200
     assert "x-request-id" in {k.lower() for k in resp.headers}, (

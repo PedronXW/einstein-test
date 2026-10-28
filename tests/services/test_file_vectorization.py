@@ -16,7 +16,7 @@ from einstein_test.models.file import File
 from einstein_test.repositories import FileRepositorySQLAlchemy, VectorRepositorySQLAlchemy
 from einstein_test.services.file import FileService
 from einstein_test.storage import InMemoryStorage
-from einstein_test.vector import FakeEmbedder, TextChunker, TextExtractor, VectorRepository
+from einstein_test.vector import FakeEmbedder, TextChunker, TextExtractor
 
 
 class _FakeFileRepository:

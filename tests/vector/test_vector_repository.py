@@ -5,7 +5,7 @@ Valida a tabela file_chunks (model FileChunk) e o VectorRepository
 """
 
 import pytest
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 from einstein_test.db.base import Base

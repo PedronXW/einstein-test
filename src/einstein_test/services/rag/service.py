@@ -6,7 +6,6 @@ A factory (`get_rag_service`) cria o adapter por usuário com o modelo
 escolhido (F-022); o embedder permanece compartilhado.
 """
 
-import os
 from collections.abc import AsyncIterator, Iterator
 from typing import Any, Callable
 

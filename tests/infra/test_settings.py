@@ -118,7 +118,6 @@ def test_ac002_validate_accepts_sqlite():
 def test_ac004_create_app_calls_validate_settings(monkeypatch):
     # o create_app chama validate_settings (fails fast) — provamos via mock
     import einstein_test.main as main
-    import einstein_test.settings as s
 
     called = {"n": 0}
 

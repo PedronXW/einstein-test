@@ -10,7 +10,6 @@ from sqlalchemy.orm import Session
 
 from einstein_test.db.base import Base
 from einstein_test.models.file import File
-from einstein_test.models.file_chunk import FileChunk
 from einstein_test.models import User
 from einstein_test.vector.repository import VectorRepositorySQLAlchemy
 from einstein_test.vector.similarity import (

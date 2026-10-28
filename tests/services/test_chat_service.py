@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from einstein_test.db.base import Base
 from einstein_test.models.chat import Chat
-from einstein_test.repositories import ChatRepository, ChatRepositorySQLAlchemy
+from einstein_test.repositories import ChatRepositorySQLAlchemy
 from einstein_test.services.chat import ChatNotFoundError, ChatService
 
 

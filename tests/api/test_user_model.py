@@ -7,7 +7,6 @@ e get_rag_service criando adapter por usuário com o model (sem singleton LLM).
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
 from einstein_test.db.base import Base
@@ -100,7 +99,6 @@ def test_ac002_patch_me_null_restores_default(client):
 
 def test_ac004_get_rag_service_uses_user_model(monkeypatch):
     from einstein_test.services import rag as rag
-    from einstein_test.vector import FakeEmbedder, get_embedder
 
     monkeypatch.setenv("OPENAI_API_KEY", "sk-teste")
     monkeypatch.setenv("OPENAI_BASE_URL", "https://spillway.ensinoeinstein.com/openai/v1")

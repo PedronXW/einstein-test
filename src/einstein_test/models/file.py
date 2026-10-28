@@ -1,6 +1,9 @@
 """Model File."""
 
+from __future__ import annotations
+
 import uuid
+from typing import TYPE_CHECKING
 
 from sqlalchemy import JSON, BigInteger, ForeignKey, String, text
 from sqlalchemy.dialects.postgresql import JSONB
@@ -8,6 +11,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from einstein_test.db.base import Base
 from einstein_test.models.mixin import TimestampMixin
+
+if TYPE_CHECKING:
+    from einstein_test.models.chat import Chat
 
 FILE_STATUS_PENDING = "pending"
 FILE_STATUS_READY = "ready"

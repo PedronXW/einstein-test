@@ -1,10 +1,17 @@
 """Model User."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from einstein_test.db.base import Base
 from einstein_test.models.mixin import TimestampMixin
+
+if TYPE_CHECKING:
+    from einstein_test.models.chat import Chat
 
 DEFAULT_USER_MODEL = "azure/gpt-5-mini"
 

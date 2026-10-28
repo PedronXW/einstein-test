@@ -5,8 +5,6 @@ File.status -> ready (com chunk_ids) ou error (com error_detail). Sem broker:
 a task é executada de forma síncrona via .apply().
 """
 
-import tempfile
-from pathlib import Path
 
 import pytest
 from sqlalchemy import create_engine

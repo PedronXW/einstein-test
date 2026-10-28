@@ -7,7 +7,7 @@ e busca são síncronos).
 """
 
 import asyncio
-from typing import Any, Callable, TypedDict
+from typing import Any, TypedDict
 
 from langgraph.graph import StateGraph
 

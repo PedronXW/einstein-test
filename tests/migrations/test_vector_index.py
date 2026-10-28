@@ -8,13 +8,11 @@ import os
 import pathlib
 import subprocess
 
-import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 from einstein_test.db.base import Base
 from einstein_test.models.file import File
-from einstein_test.models.file_chunk import FileChunk
 from einstein_test.models.user import User
 from einstein_test.vector.repository import VectorRepositorySQLAlchemy
 

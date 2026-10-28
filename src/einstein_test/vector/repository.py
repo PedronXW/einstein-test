@@ -6,7 +6,7 @@ from sqlalchemy import delete, func, insert, select
 from sqlalchemy.orm import Session, aliased
 
 from einstein_test.models.file import File
-from einstein_test.models.file_chunk import EMBEDDING_DIM, FileChunk
+from einstein_test.models.file_chunk import FileChunk
 
 DEFAULT_CHUNKS_PER_FILE = 2
 DEFAULT_MAX_CHUNKS = 12

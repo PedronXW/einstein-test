@@ -74,8 +74,6 @@ def test_ac003_get_file_reflects_status(client):
     created = _upload(c, h, chat["id"]).json()
 
     # simula o worker: marca o file como ready (usa o engine já configurado)
-    from sqlalchemy.orm import Session
-    from sqlalchemy import create_engine as _ce
     from einstein_test.api.dependencies import _SessionLocal
     from einstein_test.models.file import File
 

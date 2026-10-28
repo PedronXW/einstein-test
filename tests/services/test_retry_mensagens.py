@@ -10,7 +10,6 @@ import pytest
 
 from einstein_test.services.rag import FakeChatLLM, RagService
 from einstein_test.vector import FakeEmbedder
-from einstein_test.vector.similarity import cosine_similarity_search
 
 
 class _FlakyLLM:

@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from einstein_test.db.base import Base
 from einstein_test.models.file import File
-from einstein_test.repositories import FileRepository, FileRepositorySQLAlchemy
+from einstein_test.repositories import FileRepositorySQLAlchemy
 from einstein_test.services.file import FileNotFound, FileService
 from einstein_test.storage import InMemoryStorage, MinioStorage, Storage
 

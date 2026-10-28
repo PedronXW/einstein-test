@@ -70,7 +70,7 @@ def test_ac001_task_configured_with_autoretry_backoff():
 
 
 def test_ac002_permanent_error_no_retry_sets_error(env):
-    storage = env["storage"]
+    env["storage"]
     with Session(env["engine"]) as s:
         repo = FileRepositorySQLAlchemy(s)
         file_ = repo.create(

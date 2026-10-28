@@ -13,7 +13,7 @@ from celery import Celery
 
 from einstein_test.logging_setup import get_logger
 from einstein_test.models import File  # noqa: F401
-from einstein_test.models.file import FILE_STATUS_ERROR, FILE_STATUS_PENDING, FILE_STATUS_READY
+from einstein_test.models.file import FILE_STATUS_ERROR, FILE_STATUS_PENDING, FILE_STATUS_READY  # noqa: F401
 from einstein_test.services.file import VectorizationError
 
 logger = get_logger("tasks")

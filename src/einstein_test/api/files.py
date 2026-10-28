@@ -13,7 +13,6 @@ from einstein_test.repositories.file import FileRepositorySQLAlchemy
 from einstein_test.schemas.file import FileRead
 from einstein_test.services.chat import ChatNotFoundError, ChatService
 from einstein_test.services.file import FileNotFound, FileService
-from einstein_test.vector import VectorRepositorySQLAlchemy
 
 logger = get_logger("api.files")
 

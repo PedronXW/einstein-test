@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+    env:
+      PYTHON_VERSION: ${{ matrix.python-version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: uv sync --dev
+
+      - name: Lint (ruff)
+        run: uv run ruff check .
+
+      - name: Test (unitários + specs, sem integração)
+        run: uv run pytest -m "not integration" -q --junitxml=reports/junit.xml
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-report-${{ matrix.python-version }}
+          path: reports/
+
+  alembic:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://einstein:einstein@localhost:5432/einstein
+    services:
+      postgres:
+        image: ankane/pgvector:latest
+        env:
+          POSTGRES_USER: einstein
+          POSTGRES_PASSWORD: einstein
+          POSTGRES_DB: einstein
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U einstein -d einstein"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: uv sync --dev
+      - name: Alembic upgrade head
+        run: uv run alembic upgrade head
+      - name: Alembic check (schema sem drift)
+        run: uv run alembic check
