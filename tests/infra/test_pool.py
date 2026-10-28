@@ -7,6 +7,7 @@ pool_pre_ping/pool_timeout e a concorrência com N sessões paralelas.
 
 import threading
 
+import pytest
 from sqlalchemy import text
 from sqlalchemy.pool import QueuePool
 
@@ -15,6 +16,15 @@ from einstein_test.api.dependencies import (
     create_engine_from_config,
     get_session,
 )
+from einstein_test.settings import _build_settings
+
+
+@pytest.fixture(autouse=True)
+def _clear_settings_cache():
+    """Limpa o cache do settings para os overrides de env valerem."""
+    _build_settings.cache_clear()
+    yield
+    _build_settings.cache_clear()
 
 
 def _postgres_url() -> str:

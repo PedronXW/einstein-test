@@ -17,9 +17,11 @@ _queued_file_ids: list[int] = []
 
 @pytest.fixture(autouse=True)
 def _jwt_secret(monkeypatch):
-    """Assegura JWT_SECRET configurado nos testes (token assinado local)."""
+    """Configuração obrigatória mínima para o fails-fast do create_app passar."""
     monkeypatch.setenv("JWT_SECRET", "segredo-dos-testes-0123456789abcdefghijklmnop")
     monkeypatch.setenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60")
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-teste")
+    monkeypatch.setenv("ALLOWED_MODELS", "azure/gpt-5-mini,azure/gpt-6-luna")
 
 
 @pytest.fixture(autouse=True)
