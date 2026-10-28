@@ -1,31 +1,19 @@
-"""Repositório de User: Protocol + implementação SQLAlchemy."""
+"""Repositório de User: Protocol + implementação SQLAlchemy.
+
+O repositório persiste o hash já pronto — a política criptográfica (bcrypt)
+vive em `einstein_test.security`.
+"""
 
 from typing import Protocol
 
-import bcrypt
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from einstein_test.models.user import User
 
 
-def hash_password(password: str) -> str:
-    """Hash bcrypt da senha (salteado)."""
-    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-
-
-def verify_password(password: str, password_hash: str) -> bool:
-    """Verifica senha contra o hash bcrypt."""
-    try:
-        return bcrypt.checkpw(
-            password.encode("utf-8"), password_hash.encode("utf-8")
-        )
-    except ValueError:
-        return False
-
-
 class UserRepository(Protocol):
-    def create(self, email: str, password: str) -> User: ...
+    def create(self, email: str, password_hash: str) -> User: ...
     def get_by_email(self, email: str) -> User | None: ...
 
 
@@ -35,8 +23,8 @@ class UserRepositorySQLAlchemy:
     def __init__(self, session: Session) -> None:
         self.session = session
 
-    def create(self, email: str, password: str) -> User:
-        user = User(email=email, password_hash=hash_password(password))
+    def create(self, email: str, password_hash: str) -> User:
+        user = User(email=email, password_hash=password_hash)
         self.session.add(user)
         self.session.flush()
         self.session.refresh(user)

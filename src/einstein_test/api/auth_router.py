@@ -7,14 +7,14 @@ from sqlalchemy.orm import Session
 from einstein_test.api.auth import create_access_token, get_current_user
 from einstein_test.api.dependencies import get_session
 from einstein_test.models import User
-from einstein_test.models.user import DEFAULT_USER_MODEL
+from einstein_test.repositories.user import UserRepositorySQLAlchemy
 from einstein_test.schemas.user import TokenRead, UserCreate, UserLogin, UserRead
 from einstein_test.services.auth import (
     AuthService,
     EmailAlreadyRegistered,
     InvalidCredentials,
 )
-from einstein_test.services.rag import allowed_models
+from einstein_test.services.user import UserService
 
 router = APIRouter(tags=["auth"])
 
@@ -26,7 +26,11 @@ class UserModelUpdate(BaseModel):
 
 
 def _service(session: Session) -> AuthService:
-    return AuthService.with_session(session)
+    return AuthService(UserRepositorySQLAlchemy(session))
+
+
+def _user_service(session: Session) -> UserService:
+    return UserService(UserRepositorySQLAlchemy(session))
 
 
 @router.post("/users", response_model=UserRead, status_code=201)
@@ -67,12 +71,12 @@ def update_me(
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ) -> UserRead:
-    model = payload.model.strip() if payload.model else DEFAULT_USER_MODEL
-    if model not in allowed_models():
+    try:
+        _user_service(session).set_model(current_user, payload.model)
+    except ValueError:
         raise HTTPException(
             status_code=422, detail="modelo não suportado"
-        )
-    current_user.model = model
+        ) from None
     # UoW (F-018): `get_session` commita ao final do request
     session.flush()
     return UserRead.model_validate(current_user)

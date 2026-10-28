@@ -3,11 +3,8 @@
 from sqlalchemy.exc import IntegrityError
 
 from einstein_test.models import User
-from einstein_test.repositories.user import (
-    UserRepository,
-    UserRepositorySQLAlchemy,
-    verify_password,
-)
+from einstein_test.repositories import UserRepository
+from einstein_test.security import hash_password, verify_password
 
 BCRYPT_MAX_BYTES = 72
 
@@ -24,10 +21,6 @@ class AuthService:
     def __init__(self, repository: UserRepository) -> None:
         self.repository: UserRepository = repository
 
-    @classmethod
-    def with_session(cls, session) -> "AuthService":
-        return cls(UserRepositorySQLAlchemy(session))
-
     @staticmethod
     def _normalize_email(email: str) -> str:
         return email.strip().lower()
@@ -41,7 +34,9 @@ class AuthService:
         if self.repository.get_by_email(email) is not None:
             raise EmailAlreadyRegistered(f"email já cadastrado: {email}")
         try:
-            return self.repository.create(email=email, password=password)
+            return self.repository.create(
+                email=email, password_hash=hash_password(password)
+            )
         except IntegrityError:
             raise EmailAlreadyRegistered(f"email já cadastrado: {email}") from None
 

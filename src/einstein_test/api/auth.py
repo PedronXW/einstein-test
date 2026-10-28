@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 from einstein_test.api.dependencies import get_session
 from einstein_test.models import User
 from einstein_test.repositories.user import UserRepositorySQLAlchemy
+from einstein_test.services.user import UserService
 from einstein_test.settings import get_settings
 
 ALGORITHM = "HS256"
@@ -73,7 +74,7 @@ def get_current_user(
     email = payload.get("sub")
     if not email:
         raise HTTPException(status_code=401, detail="token inválido")
-    user = UserRepositorySQLAlchemy(session).get_by_email(email.strip().lower())
+    user = UserService(UserRepositorySQLAlchemy(session)).get_by_email(email)
     if user is None:
         raise HTTPException(status_code=401, detail="usuário não encontrado")
     return user

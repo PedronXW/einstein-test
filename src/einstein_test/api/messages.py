@@ -12,14 +12,15 @@ from einstein_test.api.auth import get_current_user
 from einstein_test.api.dependencies import get_session
 from einstein_test.logging_setup import current_request_id, get_logger
 from einstein_test.models import User
-from einstein_test.models.user import DEFAULT_USER_MODEL
-from einstein_test.repositories import VectorRepositorySQLAlchemy
 from einstein_test.repositories.chat import ChatRepositorySQLAlchemy
 from einstein_test.repositories.message import MessageRepositorySQLAlchemy
+from einstein_test.repositories.user import UserRepositorySQLAlchemy
 from einstein_test.schemas.message import MessageCreate, MessageRead
 from einstein_test.services.chat import ChatNotFoundError, ChatService
 from einstein_test.services.message import MessageNotFoundError, MessageService
-from einstein_test.services.rag import RagService, allowed_models, get_rag_service
+from einstein_test.services.rag import RagService, get_rag_service
+from einstein_test.services.user import UserService
+from einstein_test.vector import VectorRepositorySQLAlchemy
 
 logger = get_logger("api.messages")
 
@@ -60,11 +61,7 @@ async def create_message(
     current_user: User = Depends(get_current_user),
 ) -> StreamingResponse:
     request_id = current_request_id()
-    if current_user.model is not None and current_user.model not in allowed_models():
-        # allowlist re-validada em call-time (defense in depth): se o modelo
-        # armazenado saiu da allowlist, usa o primeiro modelo permitido.
-        models = allowed_models()
-        current_user.model = models[0] if models else DEFAULT_USER_MODEL
+    user_model = UserService(UserRepositorySQLAlchemy(session)).resolve_model(current_user)
     try:
         await run_in_threadpool(_ensure_chat_owned, session, chat_id, current_user.id)
     except ChatNotFoundError:
@@ -95,7 +92,7 @@ async def create_message(
         collected: list[str] = []
         try:
             history = await _history()
-            rag = await run_in_threadpool(_rag_service, session, current_user.model)
+            rag = await run_in_threadpool(_rag_service, session, user_model)
             n_tokens = 0
             async for token in rag.astream(
                 question=user_message.content,

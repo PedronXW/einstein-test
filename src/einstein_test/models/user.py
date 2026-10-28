@@ -13,8 +13,6 @@ from einstein_test.models.mixin import TimestampMixin
 if TYPE_CHECKING:
     from einstein_test.models.chat import Chat
 
-DEFAULT_USER_MODEL = "azure/gpt-5-mini"
-
 
 class User(TimestampMixin, Base):
     __tablename__ = "users"
@@ -25,7 +23,7 @@ class User(TimestampMixin, Base):
     )
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     model: Mapped[str | None] = mapped_column(
-        String(127), nullable=True, default=DEFAULT_USER_MODEL
+        String(127), nullable=True, default="azure/gpt-5-mini"
     )
 
     chats: Mapped[list["Chat"]] = relationship(back_populates="owner")
