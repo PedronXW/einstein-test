@@ -1,0 +1,4 @@
+#id	tipo	status	texto
+A-001	A	confirmada	GitHub Actions no .github/workflows/ci.yml
+A-002	A	confirmada	uv + pytest -m "not integration" + alembic check + ruff
+A-003	A	confirmada	Integracao fora do CI padrao

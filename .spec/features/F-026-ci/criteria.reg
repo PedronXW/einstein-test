@@ -1,0 +1,5 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-001	.github/workflows/ci.yml: job test com uv sync + pytest -m "not integration" em ubuntu python 3.12; dispara em push e pull_request	T-SPEC
+AC-002	U-002	CI nao roda -m integration (excluido); workflow de integracao (se houver) separado e manual (workflow_dispatch)	T-SPEC
+AC-003	U-003	job roda alembic check (schema) e ruff check (lint); falha se drift/erro de estilo	T-SPEC
+AC-004	U-001	teste local valida presenca/estrutura do ci.yml (sem executar Actions)	T-SPEC
