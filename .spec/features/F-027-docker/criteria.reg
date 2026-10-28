@@ -1,0 +1,5 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-001	Dockerfile (python 3.12-slim, uv, uv sync --frozen --no-dev, copia src, non-root, uvicorn --factory)	T-SPEC
+AC-002	U-002	docker-compose ganha servicos api (build, porta 8000, depends_on postgres/minio/redis, env) e worker (mesma imagem, celery -A einstein_test.tasks worker); infra mantida	T-SPEC
+AC-003	U-003	imagem roda como non-root (USER no Dockerfile); teste de estrutura verifica USER e --factory no entrypoint	T-SPEC
+AC-004	U-002	docker compose config valido; teste confere presenca de api/worker/infra e envs-chave	T-SPEC

@@ -1,0 +1,4 @@
+#id	tipo	status	texto
+A-001	A	confirmada	Dockerfile multi-stage/leve com uv + non-root
+A-002	A	confirmada	Compose com servicos api + worker + infra existente
+A-003	A	confirmada	Entrypoint uvicorn com --factory (fails-fast no startup)
