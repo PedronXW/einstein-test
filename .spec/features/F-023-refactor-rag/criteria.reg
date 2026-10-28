@@ -1,0 +1,5 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-001	novo pacote services/rag/ com llm.py (ChatLLM/FakeChatLLM/ChatOpenAIAdapter + retry + constantes + allowed_models), graph.py (RagState, build_prompt, _retrieve_chunks, construtor comum compile_rag_graph com async_=True|False), service.py (RagService + factory)	T-SPEC
+AC-002	U-001	services/rag.py vira re-exportador do __all__ publico atual; callers e testes nao mudam (imports intactos)	T-SPEC
+AC-003	U-002	duplicacao dos nos retrieve/generate sync/async eliminada (um compile_rag_graph com asyncio.to_thread no retrieve async)	T-SPEC
+AC-004	U-003	suite completa verde (288+ testes); proof das specs de RAG (F-011/F-013/F-021/F-022) permanece PASS	T-SPEC

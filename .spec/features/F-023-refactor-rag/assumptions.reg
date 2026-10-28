@@ -1,0 +1,4 @@
+#id	tipo	status	texto
+A-001	A	confirmada	Refactor sem mudanca de comportamento (suite verde e a prova)
+A-002	A	confirmada	services/rag.py re-exporta a API publica atual (compat)
+A-003	A	confirmada	Grafos sync/async compartilham construtor comum (sem duplicacao)
