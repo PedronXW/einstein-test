@@ -58,10 +58,12 @@ services:
 
   api:
     build: .
-    command: [".venv/bin/uvicorn", "einstein_test.main:create_app", "--host", "0.0.0.0", "--port", "8000", "--factory"]
+    command: ["sh", "-c", ".venv/bin/uvicorn einstein_test.main:create_app --host 0.0.0.0 --port 8000 --workers $API_WORKERS --factory"]
     ports:
       - "127.0.0.1:8000:8000"
     environment:
+      API_WORKERS: ${API_WORKERS:-1}
+      RATE_LIMIT_BACKEND: ${RATE_LIMIT_BACKEND:-memory}
       DATABASE_URL: postgresql://einstein:einstein@postgres:5432/einstein
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0

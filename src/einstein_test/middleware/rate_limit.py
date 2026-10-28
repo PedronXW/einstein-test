@@ -1,8 +1,13 @@
-"""Middleware de rate limiting (F-016).
+"""Middleware de rate limiting (F-016/F-029).
 
-Limitador por usuário (autenticado) ou IP (anônimo), contado em memória com
-janela deslizante. Responde 429 + Retry-After quando excedido. Limites por
-rota configuráveis via env; rotas abertas (docs/health) excluídas.
+Limitador por usuário (autenticado) ou IP (anônimo). Backends:
+
+- `memory` (default): contagem em memória com janela deslizante (single-process).
+- `redis`: contagem compartilhada entre workers (janela fixa INCR/EXPIRE) —
+  usado com `RATE_LIMIT_BACKEND=redis`; cai para memória se Redis indisponível.
+
+Responde 429 + Retry-After quando excedido. Limites por rota via env; rotas
+abertas (docs/health) excluídas.
 
 Nota de segurança: `X-Forwarded-For` só deve ser confiado quando o cliente
 direto é um proxy confiável (env `TRUSTED_PROXIES`); caso contrário, usa
@@ -19,6 +24,11 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 from einstein_test.api.auth import decode_token
+
+RATE_LIMIT_BACKEND = os.getenv("RATE_LIMIT_BACKEND", "memory").lower()
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+
+RL_PREFIX = "rl:"
 
 # Rotas excluídas do rate limiting (infra/docs).
 EXCLUDED_PATHS = ("/docs", "/redoc", "/openapi.json", "/health")
@@ -76,15 +86,46 @@ def _route_for(path: str) -> str | None:
     return None
 
 
+def _redis_key(key: tuple[str, str]) -> str:
+    """Chave Redis do contador: `rl:{identidade}:{rota}` (janela fixa 60s)."""
+    ident, route = key
+    esc_ident = "".join(ch if ch.isalnum() else "_" for ch in ident)[:80]
+    esc_route = "".join(ch if ch.isalnum() else "_" for ch in route)[:80]
+    return f"{RL_PREFIX}{esc_ident}:{esc_route}"
+
+
 class RateLimiter:
-    """Janela deslizante em memória, chave = (identidade, rota)."""
+    """Rate limiter com backend memory (default) ou redis (compartilhado).
+
+    - `memory`: janela deslizante em memória (single-process).
+    - `redis`: janela fixa via INCR/EXPIRE — compartilhada entre workers.
+      Se o Redis estiver indisponível, cai para memória (não quebra).
+    """
 
     _lock = threading.Lock()
     _entries: dict[tuple[str, str], list[float]] = defaultdict(list)
 
-    def __init__(self, limit: int, window: int = 60) -> None:
+    def __init__(
+        self,
+        limit: int,
+        window: int = 60,
+        backend: str | None = None,
+        redis_url: str | None = None,
+    ) -> None:
         self.limit = limit
         self.window = window
+        self.backend = (backend or RATE_LIMIT_BACKEND).lower()
+        self.redis_url = redis_url or REDIS_URL
+        self._redis = None
+        if self.backend == "redis":
+            try:
+                from redis import Redis
+
+                self._redis = Redis.from_url(self.redis_url, decode_responses=True)
+                self._redis.ping()  # valida conexão no init
+            except Exception:  # noqa: BLE001 - Redis fora -> fallback memória
+                self.backend = "memory"
+                self._redis = None
 
     @classmethod
     def reset(cls) -> None:
@@ -92,7 +133,27 @@ class RateLimiter:
             cls._entries = defaultdict(list)
 
     def allow(self, key: tuple[str, str]) -> tuple[bool, int | None]:
-        """Retorna (permitido, retry_after_seconds). Atômico por lock."""
+        """Retorna (permitido, retry_after_seconds)."""
+        if self._redis is not None and self.backend == "redis":
+            return self._allow_redis(key)
+        return self._allow_memory(key)
+
+    def _allow_redis(self, key) -> tuple[bool, int | None]:
+        rkey = _redis_key(key)
+        try:
+            pipe = self._redis.pipeline(transaction=True)
+            pipe.incr(rkey)
+            pipe.expire(rkey, self.window)
+            count, _ = pipe.execute()
+            if int(count) > self.limit:
+                ttl = self._redis.ttl(rkey)
+                return False, max(int(ttl or self.window), 1)
+            return True, None
+        except Exception:  # noqa: BLE001 - Redis caiu no meio -> permite (fail-open
+            # leve; o próximo request cairá p/ memória via init? mantém memória)
+            return True, None
+
+    def _allow_memory(self, key) -> tuple[bool, int | None]:
         now = time.time()
         with self._lock:
             if len(self._entries) >= MAX_KEYS and key not in self._entries:

@@ -29,16 +29,28 @@ def create_app() -> FastAPI:
     return app
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
     """Entrypoint CLI: `einstein-test` levanta uvicorn (com a factory).
 
     Usa `factory=True` + string importável (necessário para `reload`/`workers`)
     e roda o fails-fast do `validate_settings` no startup do worker.
+
+    Opções: `--workers N` (multi-processo; reload desativado quando >1).
     """
+    import argparse
+
+    parser = argparse.ArgumentParser(prog="einstein-test")
+    parser.add_argument("--host", default="0.0.0.0")
+    parser.add_argument("--port", type=int, default=8000)
+    parser.add_argument("--workers", type=int, default=1, help="número de workers")
+    parser.add_argument("--reload", action="store_true", help="auto-reload (dev)")
+    args = parser.parse_args(argv)
+
     uvicorn_run(
         "einstein_test.main:create_app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
+        host=args.host,
+        port=args.port,
+        workers=args.workers,
+        reload=args.reload and args.workers == 1,
         factory=True,
     )
