@@ -1,0 +1,5 @@
+#id	tipo	status	texto
+A-001	A	confirmada	CLI --workers com factory-string; compose api usa workers
+A-002	A	confirmada	Rate limit Redis (janela fixa INCR/EXPIRE) com fallback memoria
+A-003	A	confirmada	RATE_LIMIT_BACKEND env (memory|redis)
+A-004	A	confirmada	Escala horizontal mantem o limite efetivo (nao xN)

@@ -1,0 +1,6 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-001	main.main() aceita --workers (argparse) e usa uvicorn(workers=N) com factory-string einstein_test.main:create_app; default 1; reload=false se workers>1	T-SPEC
+AC-002	U-001	compose api usa command factory-string + --workers (env API_WORKERS default 1)	T-SPEC
+AC-003	U-002	RateLimiter ganha backend Redis (RATE_LIMIT_BACKEND=redis, redis.Redis INCR+EXPIRE ou janela fixa); falha/skip se Redis indisponivel cai p/ memoria	T-SPEC
+AC-004	U-003	RateLimitMiddleware usa backend escolhido (RATE_LIMIT_BACKEND env memory|redis, default memory); chave rl:{identidade}:{rota} janela fixa 60s com redis	T-SPEC
+AC-005	U-004	testes: memoria default; redis com mock/skip; suite completa e CLI --workers verificados	T-SPEC
