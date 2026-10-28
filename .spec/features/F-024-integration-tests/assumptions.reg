@@ -1,0 +1,4 @@
+#id	tipo	status	texto
+A-001	A	confirmada	Marker integration + exclusao do CI padrao (-m "not integration")
+A-002	A	confirmada	Skip gracioso sem chave/infra (nao falha o pytest)
+A-003	A	confirmada	Teste end-to-end real (upload->ready->pergunta->SSE) em tests/integration/

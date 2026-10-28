@@ -1,0 +1,5 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-002	marker integration registrado em pyproject.toml ([tool.pytest.ini_options] markers); CI padrao exclui integracao (-m "not integration"); suite padrao continua verde	T-SPEC
+AC-002	U-003	conftest de integracao (tests/integration/): fixture integration_available que skipa se OPENAI_API_KEY ausente ou RUN_INTEGRATION != 1; testes marcados integration	T-SPEC
+AC-003	U-001	teste test_rag_end_to_end: app real (postgres/minio/redis) -> upload -> status ready -> pergunta -> SSE com [DONE] e assistant salva; skip (nao falha) sem infra/chave	T-SPEC
+AC-004	U-002	CI padrao continua sem integracao (suite principal verde); integracao ativada via RUN_INTEGRATION=1 uv run pytest -m integration	T-SPEC

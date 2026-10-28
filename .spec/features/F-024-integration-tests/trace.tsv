@@ -1,0 +1,5 @@
+#AC-id	comando-teste	T-id	status	sha	strict
+AC-001	uv run pytest tests/integration/test_integration_config.py -q -k ac001	T-SPEC	proven	317a6a4	0
+AC-002	uv run pytest tests/integration/test_integration_config.py -q -k ac002	T-SPEC	proven	317a6a4	0
+AC-003	uv run pytest -m integration tests/integration/ -q	T-SPEC	proven	317a6a4	0
+AC-004	uv run pytest -q	T-SPEC	proven	317a6a4	0
