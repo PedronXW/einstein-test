@@ -1,0 +1,5 @@
+#id	tipo	status	texto
+A-001	A	confirmed	evento SSE de aviso usa "event: notice" com corpo {code, message}
+A-002	A	confirmed	duplicado de nome = 409; demais validacoes de upload no service com excecoes de dominio traduzidas pelo controller
+A-003	A	confirmed	avisos SSE nao sao erros: 200, sem assistant quando nao ha ready, nao bloqueia quando ha pelo menos um ready
+A-004	A	confirmed	exclusao: comportamento atual mantido; documentada como limitacao conhecida

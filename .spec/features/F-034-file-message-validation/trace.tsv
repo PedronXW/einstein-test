@@ -1,0 +1,7 @@
+#AC-id	comando-teste	T-id	status	sha	strict
+AC-001	uv run pytest tests/api/test_message_notices.py -q -k 'ac001'	T-SPEC	proven	6b045c3	0
+AC-002	uv run pytest tests/api/test_message_notices.py -q -k 'ac002'	T-SPEC	proven	6b045c3	0
+AC-003	uv run pytest tests/api/test_message_notices.py -q -k 'ac003'	T-SPEC	proven	6b045c3	0
+AC-004	uv run pytest tests/services/test_file_upload_validations.py tests/api/test_upload_validations_api.py -q -k 'ac004'	T-SPEC	proven	6b045c3	0
+AC-005	uv run pytest tests/services/test_file_upload_validations.py tests/api/test_upload_validations_api.py -q -k 'ac005'	T-SPEC	proven	6b045c3	0
+AC-006	uv run pytest tests/services/test_file_upload_validations.py tests/api/test_upload_validations_api.py -q -k 'ac006'	T-SPEC	proven	6b045c3	0

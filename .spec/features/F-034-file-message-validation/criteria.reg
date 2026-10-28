@@ -1,0 +1,7 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-001	POST /messages em chat sem nenhum file ready: 200, msg do usuario salva, SSE event notice com {code no_ready_files, message}; LLM nao chamado e nenhum assistant criado	T-SPEC
+AC-002	U-002	chat com files ready + pending/error: stream normal (LLM com prontos) + evento notice com contagens processing e failed	T-SPEC
+AC-003	U-004	content so com espacos/whitespace -> 422 (validator no MessageCreate)	T-SPEC
+AC-004	U-003	upload unico de arquivo vazio (0 bytes) -> 422; no batch -> failures com reason "arquivo vazio"	T-SPEC
+AC-005	U-003	upload de extensao fora da whitelist (pdf + TEXT_EXTENSIONS) -> 415 no unico; no batch -> failures por arquivo	T-SPEC
+AC-006	U-003	upload de nome duplicado (case-insensitive) no chat com file nao deletado do mesmo nome -> 409 no unico; no batch -> failures	T-SPEC
