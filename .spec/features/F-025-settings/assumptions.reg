@@ -1,0 +1,5 @@
+#id	tipo	status	texto
+A-001	A	confirmada	Settings dataclass frozen + lazy singleton (get_settings())
+A-002	A	confirmada	validate_settings no create_app/entrypoint (fails fast)
+A-003	A	confirmada	Modulos migram para settings sem mudar comportamento
+A-004	A	confirmada	Configs obrigatorias: jwt_secret, openai_api_key, allowed_models, database_url

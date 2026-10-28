@@ -1,0 +1,5 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-001	einstein_test/settings.py com @dataclass(frozen=True) Settings (lazy singleton get_settings/settings) cobrindo database_url, jwt_secret, expire, openai_*, allowed_models, log_level, pool, rate limits, celery, retries; le env e .env	T-SPEC
+AC-002	U-002	validate_settings(s) valida jwt_secret nao vazio, openai_api_key nao vazio, allowed_models nao vazio, database_url com postgresql:// ou sqlite://; raises SettingsError; chamado no create_app e no main (fails fast)	T-SPEC
+AC-003	U-001	modulos passam a ler de settings (auth secret/expire, rag allowed/model/base/api_key/retries, dependencies database/pool, rate_limit, tasks celery/retries) sem quebrar a suite	T-SPEC
+AC-004	U-002	validate_settings testavel: aceita env valido; rejeita jwt_secret/openai_api_key/allowed_models vazios; rejeita database_url invalido; testes com override	T-SPEC
