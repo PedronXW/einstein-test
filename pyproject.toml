@@ -44,3 +44,7 @@ dev = [
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
+markers = [
+    "integration: testes end-to-end com provedor real (requer OPENAI_API_KEY + RUN_INTEGRATION=1 + infra)",
+]
+addopts = "-m \"not integration\""
