@@ -11,9 +11,11 @@ from einstein_test.api.router import router
 from einstein_test.logging_setup import configure_logging
 from einstein_test.middleware.logging_middleware import RequestIdMiddleware
 from einstein_test.middleware.rate_limit import RateLimitMiddleware
+from einstein_test.settings import validate_settings
 
 
 def create_app() -> FastAPI:
+    validate_settings()  # fails fast: config obrigatória ausente/inválida
     configure_logging()
     app = FastAPI(title="einstein-test")
     # ordem: RequestId externo (captura 429 do rate limit e 500), depois rate limit
@@ -27,9 +29,7 @@ def create_app() -> FastAPI:
     return app
 
 
-app = create_app()
-
-
 def main() -> None:
     """Entrypoint CLI: `einstein-test` levanta uvicorn con la app."""
-    uvicorn_run("einstein_test.main:app", host="0.0.0.0", port=8000, reload=True)
+    app = create_app()
+    uvicorn_run(app, host="0.0.0.0", port=8000, reload=True)

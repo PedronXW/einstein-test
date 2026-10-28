@@ -9,18 +9,17 @@ Configuração via ambiente (testes/injeção) ou `.env`: `JWT_SECRET`
 resolvido uma única vez e cacheado.
 """
 
-import os
 from datetime import UTC, datetime, timedelta
 from functools import lru_cache
 
 import jwt
-from dotenv import load_dotenv
 from fastapi import Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 
 from einstein_test.api.dependencies import get_session
 from einstein_test.models import User
 from einstein_test.repositories.user import UserRepositorySQLAlchemy
+from einstein_test.settings import get_settings
 
 ALGORITHM = "HS256"
 DEFAULT_EXPIRE_MINUTES = 60
@@ -28,8 +27,7 @@ DEFAULT_EXPIRE_MINUTES = 60
 
 @lru_cache(maxsize=1)
 def _secret() -> str:
-    load_dotenv()
-    secret = os.getenv("JWT_SECRET", "")
+    secret = get_settings().jwt_secret
     if not secret:
         raise RuntimeError("JWT_SECRET não configurado (defina no .env)")
     return secret
@@ -37,8 +35,7 @@ def _secret() -> str:
 
 @lru_cache(maxsize=1)
 def _expire_minutes() -> int:
-    load_dotenv()
-    return int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", DEFAULT_EXPIRE_MINUTES))
+    return get_settings().access_token_expire_minutes
 
 
 def create_access_token(subject: str) -> str:

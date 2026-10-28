@@ -17,6 +17,8 @@ from tenacity import (
     wait_exponential,
 )
 
+from einstein_test.settings import get_settings
+
 DEFAULT_CHAT_MODEL = "azure/gpt-5-mini"
 DEFAULT_BASE_URL = "https://spillway.ensinoeinstein.com/openai/v1"
 
@@ -29,8 +31,8 @@ DEFAULT_ALLOWED_MODELS = "azure/gpt-5-mini,azure/gpt-6-luna"
 def allowed_models() -> list[str]:
     """Modelos de LLM permitidos, lidos do env `ALLOWED_MODELS`.
 
-    Env ausente ou vazia → usa o default (os 2 modelos). Lê o `.env` quando
-    existir (consistente com o adapter).
+    Lido por request (call-time) para refletir mudanças do operador; usa o
+    default quando ausente/vazio.
     """
     from dotenv import load_dotenv
 
@@ -90,16 +92,14 @@ class ChatOpenAIAdapter:
         base_url: str | None = None,
         model: str | None = None,
     ) -> None:
-        from dotenv import load_dotenv
-
-        load_dotenv()
-        self.api_key = api_key or os.getenv("OPENAI_API_KEY")
+        cfg = get_settings()
+        self.api_key = api_key or cfg.openai_api_key
         if not self.api_key:
             raise RuntimeError("OPENAI_API_KEY não configurada (defina no .env)")
         from langchain_openai import ChatOpenAI
 
-        self.model = model or os.getenv("OPENAI_CHAT_MODEL", DEFAULT_CHAT_MODEL)
-        self.base_url = base_url or os.getenv("OPENAI_BASE_URL", DEFAULT_BASE_URL)
+        self.model = model or cfg.openai_chat_model
+        self.base_url = base_url or cfg.openai_base_url
         self._llm = ChatOpenAI(
             model=self.model,
             api_key=self.api_key,
