@@ -56,6 +56,56 @@ services:
     networks:
       - infra-net
 
+  api:
+    build: .
+    command: [".venv/bin/uvicorn", "einstein_test.main:create_app", "--host", "0.0.0.0", "--port", "8000", "--factory"]
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      DATABASE_URL: postgresql://einstein:einstein@postgres:5432/einstein
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET obrigatório no .env}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?OPENAI_API_KEY obrigatória no .env}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://spillway.ensinoeinstein.com/openai/v1}
+      ALLOWED_MODELS: ${ALLOWED_MODELS:-azure/gpt-5-mini,azure/gpt-6-luna}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+    networks:
+      - infra-net
+
+  worker:
+    build: .
+    command: [".venv/bin/celery", "-A", "einstein_test.tasks", "worker", "--loglevel=info"]
+    environment:
+      DATABASE_URL: postgresql://einstein:einstein@postgres:5432/einstein
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET obrigatório no .env}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?OPENAI_API_KEY obrigatória no .env}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://spillway.ensinoeinstein.com/openai/v1}
+      ALLOWED_MODELS: ${ALLOWED_MODELS:-azure/gpt-5-mini,azure/gpt-6-luna}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - infra-net
+
 volumes:
   pgdata:
   minio-data:

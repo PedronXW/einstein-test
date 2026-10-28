@@ -18,20 +18,28 @@ INITDB_DIR = ROOT / "docker" / "initdb"
 
 def compose_config() -> str:
     """Roda `docker compose config` na raiz; falha se o YAML for inválido."""
+    env = dict(os.environ)
+    # o compose exige JWT_SECRET/OPENAI_API_KEY (fails fast) — usa dummies
+    env.setdefault("JWT_SECRET", "segredo-teste")
+    env.setdefault("OPENAI_API_KEY", "sk-teste")
     return subprocess.check_output(
-        ["docker", "compose", "config"], cwd=ROOT, text=True
+        ["docker", "compose", "config"], cwd=ROOT, env=env, text=True
     )
 
 
 def service_block(cfg: str, service: str) -> str:
-    """Extrai o bloco YAML de um serviço do output de `docker compose config`."""
+    """Extrai o bloco YAML de um serviço TOP-LEVEL (indent 2) do compose config.
+
+    `docker compose config` usa indent 2 para serviços; `depends_on` aninhado
+    usa indent 4 — exigimos exatamente indent 2 para não confundir com o
+    `depends_on.minio`/`depends_on.postgres` de api/worker.
+    """
     lines = cfg.splitlines()
     start = None
-    indent = None
     for i, line in enumerate(lines):
-        if line.strip() == f"{service}:":
+        cur = len(line) - len(line.lstrip())
+        if cur == 2 and line.strip() == f"{service}:":
             start = i
-            indent = len(line) - len(line.lstrip())
             break
     if start is None:
         raise AssertionError(f"servico '{service}' nao encontrado no compose")
@@ -41,7 +49,7 @@ def service_block(cfg: str, service: str) -> str:
         if not line.strip():
             continue
         cur = len(line) - len(line.lstrip())
-        if cur <= indent:
+        if cur <= 2:
             break
         block.append(line)
     return "\n".join(block)
@@ -143,7 +151,7 @@ def test_ac005_network_declared(cfg: str) -> None:
 
 
 def test_ac005_isolated_from_default(cfg: str) -> None:
-    for svc in ("postgres", "minio", "redis"):
+    for svc in ("postgres", "minio", "redis", "api", "worker"):
         block = service_block(cfg, svc)
         assert "infra-net" in block, f"{svc} na rede infra-net"
         assert "default" not in block, f"{svc} nao deve estar na rede default"
@@ -153,8 +161,10 @@ def test_ac002_imagens_compose(cfg: str) -> None:
     import re
 
     images = set(re.findall(r"^\s{4}image:\s*(\S+)", cfg, re.MULTILINE))
-    assert images == {
-        "ankane/pgvector:latest",
-        "minio/minio:latest",
-        "redis:7-alpine",
-    }, "imagens: pgvector + minio + redis (F-015)"
+    # imagens de infra presentes; api/worker usam build (sem image explícita)
+    assert "ankane/pgvector:latest" in images, "postgres pgvector"
+    assert "minio/minio:latest" in images, "minio"
+    assert "redis:7-alpine" in images, "redis"
+    # api/worker presentes via bloco build (indent 4 build / 6 dockerfile)
+    assert re.search(r"^\s{4}build:", cfg, re.MULTILINE), "api/worker usam build"
+    assert re.search(r"dockerfile: Dockerfile", cfg), "Dockerfile no build"
