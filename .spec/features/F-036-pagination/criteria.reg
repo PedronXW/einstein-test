@@ -1,0 +1,7 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-001	GET /chats retorna envelope {items, page, page_size, total, total_pages} e respeita page/page_size; chats ordenados por created_at desc	T-SPEC
+AC-002	U-002	GET /chats/{chat_id}/messages retorna envelope paginado; ordenacao ascendente estavel (created_at asc, id asc)	T-SPEC
+AC-003	U-003	GET /chats/{chat_id}/files retorna envelope paginado; ordenados por created_at desc	T-SPEC
+AC-004	U-004	defaults page=1 e page_size=20; total_pages = ceil(total / page_size); pagina alem do fim -> items vazio com total real	T-SPEC
+AC-005	U-005	page < 1, page_size < 1 ou page_size > 100 -> 422	T-SPEC
+AC-006	U-006	repositorios/servicos ganham limit/offset opcionais + count(); usos internos (historico RAG via list_messages, files_state via list_files) continuam com lista completa (sem paginacao)	T-SPEC

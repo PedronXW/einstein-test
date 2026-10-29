@@ -1,0 +1,6 @@
+#id	tipo	status	texto
+A-001	A	confirmed	ordenacao das mensagens mantida ascendente (cronologica) para paginacao estavel
+A-002	A	confirmed	mudanca de contrato (lista -> envelope) aceita, mesmo sendo breaking
+A-003	A	confirmed	usos internos seguem sem paginacao (lista completa)
+A-004	A	confirmed	page e 1-based; pagina alem do fim retorna items vazio com total real
+A-005	A	confirmed	politica de paginacao (default 20, max 100, min 1) mora em services/pagination.py (fonte unica, fora do controller)
