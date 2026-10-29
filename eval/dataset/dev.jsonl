@@ -1,0 +1,6 @@
+{"id": "q1", "question": "Em que ano a Aurora LMS foi lançada?", "expected_files": ["aurora-lms.md"], "gold_answer": "2021", "domain": "synthetic", "edge": ""}
+{"id": "q2", "question": "Quantos idiomas a Aurora suporta e quais são eles?", "expected_files": ["aurora-lms.md"], "gold_answer": "5 idiomas: português, espanhol, inglês, francês e alemão", "domain": "synthetic", "edge": ""}
+{"id": "q3", "question": "Quem fundou a Aurora e em qual mês e ano?", "expected_files": ["equipe.md"], "gold_answer": "Clara Mendes e Rafael Duarte, em janeiro de 2021", "domain": "synthetic", "edge": ""}
+{"id": "q4", "question": "Qual é o plano mais barato da Aurora e quanto custa por mês?", "expected_files": ["aurora-lms.md"], "gold_answer": "O plano Essencial, que custa R$ 49 por mês", "domain": "synthetic", "edge": ""}
+{"id": "q5", "question": "Por que a aprendizagem ativa tende a superar a aula expositiva no longo prazo?", "expected_files": ["aprendizagem-ativa.md"], "gold_answer": "Porque o estudante explica, aplica e ensina o que aprendeu, o que aumenta a retenção do conteúdo", "domain": "natural", "edge": ""}
+{"id": "q6", "question": "Qual era a população da Finlândia em 2024?", "expected_files": [], "gold_answer": "", "domain": "synthetic", "edge": "no_context"}
