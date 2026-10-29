@@ -439,6 +439,11 @@ Documentadas de forma **transparente** — pontos que ainda não foram fechados
 para o projeto valer como produto em produção. Prioridade indicativa.
 
 ### Segurança e rede
+- **Autenticação mínima** — hoje é um JWT próprio (PyJWT + bcrypt) com rate
+  limiting, suficiente para este porte. Em **produção real** seria substituído
+  por um provedor gerenciado (ex.: **Supabase Auth** ou **Auth0**) para SSO,
+  OAuth/OIDC, gestão de usuários/MFA e segurança de senha no padrão da
+  indústria, em vez de manter o controle próprio de credenciais.
 - **Sem HTTPS/TLS e sem domínio próprio** — o acesso é via DNS do ALB
   (`http://einstein-prod-alb-...elb.amazonaws.com`), em **HTTP puro**. Falta
   `aws_acm_certificate` + listener 443 + (opcional) Route 53. **Bloqueante
