@@ -75,7 +75,7 @@ def test_ac004_post_messages_sse_still_works(client):
     assert '"token1"' in body and "[DONE]" in body
     assert "message_id" in body
     # assistant persistida
-    msgs = c.get(f"/chats/{chat['id']}/messages", headers=h).json()
+    msgs = c.get(f"/chats/{chat['id']}/messages", headers=h).json()["items"]
     assert any(m["role"] == "assistant" for m in msgs)
 
 

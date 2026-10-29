@@ -116,7 +116,7 @@ def test_ac003_partial_failure_keeps_valid_and_reports(client, monkeypatch):
     assert failure["index"] == 1
     assert failure["name"] == "big.txt"
     assert failure["reason"] == "arquivo muito grande"
-    listing = c.get(f"/chats/{chat['id']}/files", headers=h).json()
+    listing = c.get(f"/chats/{chat['id']}/files", headers=h).json()["items"]
     assert [f["name"] for f in listing] == ["ok.txt"], "válido persistido mesmo com inválido"
 
 
@@ -136,7 +136,7 @@ def test_ac004_over_limit_goes_to_failures_only(client, monkeypatch, enqueue_spy
     assert len(body["failures"]) == 1
     assert body["failures"][0]["name"] == "big.txt"
     assert body["failures"][0]["reason"] == "arquivo muito grande"
-    listing = c.get(f"/chats/{chat['id']}/files", headers=h).json()
+    listing = c.get(f"/chats/{chat['id']}/files", headers=h).json()["items"]
     assert len(listing) == 1
     assert [f["id"] for f in body["created"]] == enqueue_spy, "inválido não enfileirado"
 

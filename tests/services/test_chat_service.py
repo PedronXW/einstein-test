@@ -37,11 +37,22 @@ class _SentinelRepo:
             return None
         return chat
 
-    def list(self, user_id):
-        return [
+    def list(self, user_id, *, limit=None, offset=None):
+        items = [
             c for c in self._chats.values()
             if c.deleted_at is None and c.user_id == user_id
         ]
+        if offset is not None:
+            items = items[offset:]
+        if limit is not None:
+            items = items[:limit]
+        return items
+
+    def count(self, user_id):
+        return len([
+            c for c in self._chats.values()
+            if c.deleted_at is None and c.user_id == user_id
+        ])
 
     def delete(self, chat_id):
         chat = self._chats.get(chat_id)

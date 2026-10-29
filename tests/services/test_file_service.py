@@ -45,11 +45,22 @@ class _FakeFileRepository:
             return None
         return file_
 
-    def list(self, chat_id):
-        return [
+    def list(self, chat_id, *, limit=None, offset=None):
+        items = [
             f for f in self._files.values()
             if f.chat_id == chat_id and f.deleted_at is None
         ]
+        if offset is not None:
+            items = items[offset:]
+        if limit is not None:
+            items = items[:limit]
+        return items
+
+    def count(self, chat_id):
+        return len([
+            f for f in self._files.values()
+            if f.chat_id == chat_id and f.deleted_at is None
+        ])
 
     def delete(self, file_id):
         file_ = self._files.get(file_id)

@@ -88,7 +88,7 @@ def test_ac003_create_message_in_chat(client):
     assert resp.headers["content-type"].startswith("text/event-stream")
     body = resp.text
     assert '[DONE]' in body, "SSE conclui"
-    msgs = c.get(f"/chats/{chat['id']}/messages", headers=h).json()
+    msgs = c.get(f"/chats/{chat['id']}/messages", headers=h).json()["items"]
     user = next(m for m in msgs if m["role"] == "user")
     assert user["content"] == "primeira mensagem"
     assert user["chat_id"] == chat["id"]
@@ -112,7 +112,7 @@ def test_ac003_list_messages_by_chat(client):
     _post_message(c, h, chat["id"], "b")
     resp = c.get(f"/chats/{chat['id']}/messages", headers=h)
     assert resp.status_code == 200
-    msgs = resp.json()
+    msgs = resp.json()["items"]
     assert isinstance(msgs, list) and len(msgs) == 4  # 2 user + 2 assistant
 
 
@@ -123,7 +123,7 @@ def test_ac003_list_messages_isolated_per_chat(client):
     _with_ready_file(engine, chat_a["id"])
     _post_message(c, h, chat_a["id"], "msg A")
     resp_b = c.get(f"/chats/{chat_b['id']}/messages", headers=h)
-    assert resp_b.json() == []
+    assert resp_b.json()["items"] == []
 
 
 def test_ac003_get_message_by_id(client):
@@ -131,7 +131,7 @@ def test_ac003_get_message_by_id(client):
     chat = _create_chat(c, h)
     _with_ready_file(engine, chat["id"])
     _post_message(c, h, chat["id"], "busca")
-    msgs = c.get(f"/chats/{chat['id']}/messages", headers=h).json()
+    msgs = c.get(f"/chats/{chat['id']}/messages", headers=h).json()["items"]
     user = next(m for m in msgs if m["role"] == "user")
     got = c.get(f"/messages/{user['id']}", headers=h)
     assert got.status_code == 200
@@ -144,12 +144,12 @@ def test_ac003_delete_message(client):
     _with_ready_file(engine, chat["id"])
     resp = _post_message(c, h, chat["id"], "remove")
     _message_id_from_sse(resp.text)
-    msgs = c.get(f"/chats/{chat['id']}/messages", headers=h).json()
+    msgs = c.get(f"/chats/{chat['id']}/messages", headers=h).json()["items"]
     user = next(m for m in msgs if m["role"] == "user")
     resp_del = c.delete(f"/messages/{user['id']}", headers=h)
     assert resp_del.status_code == 200
     assert c.get(f"/messages/{user['id']}", headers=h).status_code == 404
-    listing = c.get(f"/chats/{chat['id']}/messages", headers=h).json()
+    listing = c.get(f"/chats/{chat['id']}/messages", headers=h).json()["items"]
     assert all(m["id"] != user["id"] for m in listing), "soft delete na lista"
 
 
@@ -158,7 +158,7 @@ def test_ac004_message_read_shape(client):
     chat = _create_chat(c, h)
     _with_ready_file(engine, chat["id"])
     _post_message(c, h, chat["id"], "shape")
-    msgs = c.get(f"/chats/{chat['id']}/messages", headers=h).json()
+    msgs = c.get(f"/chats/{chat['id']}/messages", headers=h).json()["items"]
     body = msgs[0]
     assert "id" in body and "content" in body
     assert "role" in body and "chat_id" in body
@@ -206,7 +206,7 @@ def test_ac004_role_defaults_user(client):
     chat = _create_chat(c, h)
     _with_ready_file(engine, chat["id"])
     _post_message(c, h, chat["id"], "sem role")
-    msgs = c.get(f"/chats/{chat['id']}/messages", headers=h).json()
+    msgs = c.get(f"/chats/{chat['id']}/messages", headers=h).json()["items"]
     user = next(m for m in msgs if m["role"] == "user")
     assistant = next(m for m in msgs if m["role"] == "assistant")
     assert user["content"] == "sem role", "user criada com conteúdo da pergunta"

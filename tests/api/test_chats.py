@@ -75,7 +75,7 @@ def test_ac003_list_returns_chats(client):
     _create_chat(client, h, name="B")
     resp = client.get("/chats", headers=h)
     assert resp.status_code == 200
-    chats = resp.json()
+    chats = resp.json()["items"]
     assert isinstance(chats, list)
     assert len(chats) == 2
 
@@ -95,7 +95,7 @@ def test_ac003_delete_chat(client):
     assert resp.status_code == 200
     missing = client.get(f"/chats/{created['id']}", headers=h)
     assert missing.status_code == 404
-    listing = client.get("/chats", headers=h).json()
+    listing = client.get("/chats", headers=h).json()["items"]
     assert all(c["id"] != created["id"] for c in listing), (
         "lista nao retorna chat soft-deletado"
     )

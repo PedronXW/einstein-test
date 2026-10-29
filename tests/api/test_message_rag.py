@@ -98,7 +98,7 @@ def test_ac004_assistant_message_persisted(client):
     seed_ready_file(engine, chat["id"])
     resp = _ask(c, chat["id"], h)
     assert resp.status_code == 200
-    msgs = c.get(f"/chats/{chat['id']}/messages", headers=h).json()
+    msgs = c.get(f"/chats/{chat['id']}/messages", headers=h).json()["items"]
     roles = [m["role"] for m in msgs]
     assert "user" in roles, "message user criada"
     assert "assistant" in roles, "message assistant salva"
@@ -130,7 +130,7 @@ def test_ac005_llm_error_emits_error_event_without_saving(client):
     try:
         resp = _ask(c, chat["id"], h, content="quebra?")
         assert "error" in resp.text.lower(), "evento de erro presente"
-        msgs = c.get(f"/chats/{chat['id']}/messages", headers=h).json()
+        msgs = c.get(f"/chats/{chat['id']}/messages", headers=h).json()["items"]
         roles = [m["role"] for m in msgs]
         assert "assistant" not in roles, "nenhuma assistant salva em erro"
         assert "user" in roles, "message user permanece"

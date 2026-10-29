@@ -93,7 +93,7 @@ def test_ac008_get_and_list_keep_vector_fields(client):
     created = _upload(c, h, chat["id"], name="nota.txt", content=b"abc " * 20).json()
     got = c.get(f"/files/{created['id']}", headers=h).json()
     assert got["status"] == "pending"
-    listing = c.get(f"/chats/{chat['id']}/files", headers=h).json()
+    listing = c.get(f"/chats/{chat['id']}/files", headers=h).json()["items"]
     assert listing[0]["id"] == created["id"]
 
 

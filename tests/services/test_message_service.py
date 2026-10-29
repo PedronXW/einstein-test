@@ -35,11 +35,22 @@ class _FakeMessageRepository:
             return None
         return msg
 
-    def list(self, chat_id):
-        return [
+    def list(self, chat_id, *, limit=None, offset=None):
+        items = [
             m for m in self._messages.values()
             if m.chat_id == chat_id and m.deleted_at is None
         ]
+        if offset is not None:
+            items = items[offset:]
+        if limit is not None:
+            items = items[:limit]
+        return items
+
+    def count(self, chat_id):
+        return len([
+            m for m in self._messages.values()
+            if m.chat_id == chat_id and m.deleted_at is None
+        ])
 
     def delete(self, message_id):
         msg = self._messages.get(message_id)

@@ -75,7 +75,7 @@ def test_ac004_list_files_by_chat(client):
     _upload(c, h, chat["id"], name="b.txt", content=b"bb")
     resp = c.get(f"/chats/{chat['id']}/files", headers=h)
     assert resp.status_code == 200
-    files = resp.json()
+    files = resp.json()["items"]
     assert isinstance(files, list) and len(files) == 2
 
 
@@ -84,7 +84,7 @@ def test_ac004_list_files_isolated_per_chat(client):
     chat_a = _create_chat(c, h, "A")
     chat_b = _create_chat(c, h, "B")
     _upload(c, h, chat_a["id"], name="x.txt", content=b"x")
-    assert c.get(f"/chats/{chat_b['id']}/files", headers=h).json() == []
+    assert c.get(f"/chats/{chat_b['id']}/files", headers=h).json()["items"] == []
 
 
 def test_ac004_get_file_by_id(client):
@@ -103,7 +103,7 @@ def test_ac004_delete_file(client):
     resp = c.delete(f"/files/{created['id']}", headers=h)
     assert resp.status_code == 200
     assert c.get(f"/files/{created['id']}", headers=h).status_code == 404
-    listing = c.get(f"/chats/{chat['id']}/files", headers=h).json()
+    listing = c.get(f"/chats/{chat['id']}/files", headers=h).json()["items"]
     assert all(f["id"] != created["id"] for f in listing)
 
 

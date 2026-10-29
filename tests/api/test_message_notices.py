@@ -91,7 +91,7 @@ def test_ac001_no_ready_files_emits_notice_no_llm(client):
     assert "no_ready_files" in body, "código no_ready_files"
     assert '"token1"' not in body, "LLM não chamado"
     assert "[DONE]" not in body, "sem fluxo normal"
-    msgs = c.get(f"/chats/{chat['id']}/messages", headers=h).json()
+    msgs = c.get(f"/chats/{chat['id']}/messages", headers=h).json()["items"]
     roles = [m["role"] for m in msgs]
     assert "user" in roles, "mensagem do usuário salva"
     assert "assistant" not in roles, "nenhuma assistant criada"

@@ -133,7 +133,7 @@ def test_ac005_chats_isolated_between_users(client):
 
     # bob não vê o chat da alice
     resp_b = c.get("/chats", headers=_auth_headers(token_b))
-    assert resp_b.json() == [], "bob lista só os próprios chats"
+    assert resp_b.json()["items"] == [], "bob lista só os próprios chats"
 
     # bob não acessa o chat da alice por id
     resp = c.get(f"/chats/{chat_a['id']}", headers=_auth_headers(token_b))
@@ -148,7 +148,7 @@ def test_ac005_owner_access_ok(client):
     chat = c.post(
         "/chats", json={"name": "meu"}, headers=_auth_headers(token)
     ).json()
-    assert c.get("/chats", headers=_auth_headers(token)).json()[0]["id"] == chat["id"]
+    assert c.get("/chats", headers=_auth_headers(token)).json()["items"][0]["id"] == chat["id"]
     assert c.get(f"/chats/{chat['id']}", headers=_auth_headers(token)).status_code == 200
 
 
@@ -188,7 +188,7 @@ def test_ac007_messages_without_files_emit_notice(client):
     assert "notice" in resp.text, "aviso SSE presente"
     assert "no_ready_files" in resp.text
     assert "[DONE]" not in resp.text, "sem fluxo de resposta sem arquivos prontos"
-    msgs = c.get(f"/chats/{chat['id']}/messages", headers=_auth_headers(token)).json()
+    msgs = c.get(f"/chats/{chat['id']}/messages", headers=_auth_headers(token)).json()["items"]
     assert all(m["role"] != "assistant" for m in msgs), "nenhuma assistant sem arquivos"
 
 
@@ -226,7 +226,7 @@ def test_ac006_idor_messages_by_id_blocked(client):
         headers={**_auth_headers(token_a), "Accept": "text/event-stream"},
     )
     assert resp.status_code == 200
-    msgs = c.get(f"/chats/{chat_a['id']}/messages", headers=_auth_headers(token_a)).json()
+    msgs = c.get(f"/chats/{chat_a['id']}/messages", headers=_auth_headers(token_a)).json()["items"]
     user_msg = next(m for m in msgs if m["role"] == "user")
     msg_id = user_msg["id"]
     assert c.get(f"/messages/{msg_id}", headers=_auth_headers(token_a)).status_code == 200
