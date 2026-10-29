@@ -126,7 +126,7 @@
       "_type": "request",
       "name": "GET /chats — Listar chats",
       "method": "GET",
-      "url": "{{ base_url }}/chats",
+      "url": "{{ base_url }}/chats?page=1&page_size=20",
       "body": {},
       "parameters": [],
       "headers": [
@@ -137,7 +137,21 @@
         }
       ],
       "authentication": {},
-      "metaSortKey": 100
+      "metaSortKey": 100,
+      "query": [
+        {
+          "id": "page",
+          "name": "page",
+          "value": "1",
+          "disabled": false
+        },
+        {
+          "id": "page_size",
+          "name": "page_size",
+          "value": "20",
+          "disabled": false
+        }
+      ]
     },
     {
       "_id": "req_chats_create",
@@ -221,7 +235,7 @@
       "_type": "request",
       "name": "GET /chats/:chat_id/messages — Listar mensagens do chat",
       "method": "GET",
-      "url": "{{ base_url }}/chats/{{ chat_id }}/messages",
+      "url": "{{ base_url }}/chats/{{ chat_id }}/messages?page=1&page_size=20",
       "body": {},
       "parameters": [],
       "headers": [
@@ -232,7 +246,21 @@
         }
       ],
       "authentication": {},
-      "metaSortKey": 200
+      "metaSortKey": 200,
+      "query": [
+        {
+          "id": "page",
+          "name": "page",
+          "value": "1",
+          "disabled": false
+        },
+        {
+          "id": "page_size",
+          "name": "page_size",
+          "value": "20",
+          "disabled": false
+        }
+      ]
     },
     {
       "_id": "req_messages_create",
@@ -322,7 +350,7 @@
       "_type": "request",
       "name": "GET /chats/:chat_id/files — Listar arquivos do chat",
       "method": "GET",
-      "url": "{{ base_url }}/chats/{{ chat_id }}/files",
+      "url": "{{ base_url }}/chats/{{ chat_id }}/files?page=1&page_size=20",
       "body": {},
       "parameters": [],
       "headers": [
@@ -333,7 +361,21 @@
         }
       ],
       "authentication": {},
-      "metaSortKey": 300
+      "metaSortKey": 300,
+      "query": [
+        {
+          "id": "page",
+          "name": "page",
+          "value": "1",
+          "disabled": false
+        },
+        {
+          "id": "page_size",
+          "name": "page_size",
+          "value": "20",
+          "disabled": false
+        }
+      ]
     },
     {
       "_id": "req_files_upload",
