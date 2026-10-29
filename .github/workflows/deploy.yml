@@ -5,6 +5,7 @@ on:
     inputs:
       environment:
         description: "Ambiente-alvo do deploy"
+        required: true
         default: "prod"
         type: choice
         options:
