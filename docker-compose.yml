@@ -65,6 +65,8 @@ services:
       API_WORKERS: ${API_WORKERS:-1}
       RATE_LIMIT_BACKEND: ${RATE_LIMIT_BACKEND:-memory}
       MINIO_ENDPOINT: http://minio:9000
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
       DATABASE_URL: postgresql://einstein:einstein@postgres:5432/einstein
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
@@ -94,6 +96,8 @@ services:
     command: [".venv/bin/celery", "-A", "einstein_test.tasks", "worker", "--loglevel=info"]
     environment:
       MINIO_ENDPOINT: http://minio:9000
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
       DATABASE_URL: postgresql://einstein:einstein@postgres:5432/einstein
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0

@@ -15,7 +15,7 @@ from sqlalchemy import create_engine
 
 from einstein_test.db.base import Base
 from einstein_test.main import create_app
-from einstein_test.storage import set_storage, InMemoryStorage
+from einstein_test.storage import MinioStorage, set_storage
 
 pytestmark = pytest.mark.integration
 
@@ -34,14 +34,15 @@ def integration_available():
 
 @pytest.fixture
 def client(integration_available):
-    # app com postgres real (DATABASE_URL do ambiente) e storage fake em memória
-    # (o upload usa minio real se configurado; aqui usamos InMemory para simplicidade)
+    # app com postgres real (DATABASE_URL do ambiente) e storage MinIO/S3 real,
+    # compartilhado com o worker — o upload persiste no MinIO e o worker baixa
+    # e vetoriza em background (o conftest de integração desativa os mocks).
     from einstein_test.api.dependencies import configure_session_factory
 
     engine = create_engine(os.getenv("DATABASE_URL", "postgresql://einstein:einstein@localhost:5432/einstein"))
     Base.metadata.create_all(engine)
     configure_session_factory(engine)
-    set_storage(InMemoryStorage())
+    set_storage(MinioStorage())
     app = create_app()
     app.dependency_overrides.clear()
     with TestClient(app) as c:
@@ -93,4 +94,5 @@ def test_rag_end_to_end(client):
     assert "[DONE]" in body, "SSE concluiu"
     assert '"message_id"' in body, "assistant salva com id"
     msgs = client.get(f"/chats/{chat_id}/messages", headers=h).json()
-    assert any(m["role"] == "assistant" and m["content"] for m in msgs)
+    items = msgs.get("items", msgs) if isinstance(msgs, dict) else msgs
+    assert any(m["role"] == "assistant" and m["content"] for m in items)

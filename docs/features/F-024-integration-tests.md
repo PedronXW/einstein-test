@@ -42,5 +42,6 @@ RUN_INTEGRATION=1 uv run pytest -m integration tests/integration/
 ## Notas
 - Sem `RUN_INTEGRATION`/chave, a integração **skipa** (não falha) — o CI e o
   `pytest` local continuam verdes.
-- O teste end-to-end usa o banco real (`DATABASE_URL`) e o storage em memória
-  (o upload real pode ser adaptado para MinIO se desejado).
+- O teste end-to-end usa o banco real (`DATABASE_URL`), storage **MinIO/S3
+  real** (compartilhado com o worker) e publica a vetorização no Redis — o
+  upload precisa do worker de pé para ficar `ready`.

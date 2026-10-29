@@ -155,6 +155,9 @@ export JWT_SECRET=$(openssl rand -hex 32)
 export DATABASE_URL=postgresql://einstein:einstein@localhost:5432/einstein
 export CELERY_BROKER_URL=redis://localhost:6379/0
 export CELERY_RESULT_BACKEND=redis://localhost:6379/0
+export MINIO_ENDPOINT=http://localhost:9000
+export MINIO_ROOT_USER=minioadmin        # credenciais do MinIO do compose
+export MINIO_ROOT_PASSWORD=minioadmin
 
 # 4) migrações
 uv run alembic upgrade head
@@ -275,6 +278,8 @@ Copie `.env.example` para `.env` e preencha:
 | `DATABASE_POOL_TIMEOUT` | `30` | Timeout do pool (s) |
 | `CELERY_BROKER_URL` | `redis://localhost:6379/0` | Broker do Celery |
 | `CELERY_RESULT_BACKEND` | `redis://localhost:6379/0` | Result backend do Celery |
+| `MINIO_ENDPOINT` | `http://localhost:9000` | Endpoint do object storage local |
+| `MINIO_ROOT_USER` / `MINIO_ROOT_PASSWORD` | `minioadmin` / `minioadmin` | Credenciais do MinIO local (no AWS, use `S3_ENDPOINT_URL` + task role do ECS) |
 | `VECTORIZE_MAX_RETRIES` | `3` | Retries da vetorização |
 | `VECTORIZE_RETRY_BACKOFF` | `2` | Backoff exponencial (s) |
 | `LLM_MAX_RETRIES` | `2` | Retries do LLM antes do 1º token |
