@@ -1,17 +1,25 @@
-"""Testes TDD da feature F-011 (AC-001: busca por similaridade).
+"""Testes TDD das features F-011 (busca por similaridade) e F-037
+(candidate-pool KNN + re-rank).
 
 Valida a busca vetorial por similaridade (cosine) filtrada por chat,
-com semântica "2 chunks por arquivo + teto global (12)" e ordenação global.
+com semântica "2 chunks por arquivo + teto global (12)", ordenação global e
+a forma KNN que habilita o índice HNSW no Postgres.
 """
 
 import pytest
 from sqlalchemy import create_engine
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import Session
 
 from einstein_test.db.base import Base
-from einstein_test.models.file import File
 from einstein_test.models import User
-from einstein_test.vector.repository import VectorRepositorySQLAlchemy
+from einstein_test.models.file import File
+from einstein_test.vector.repository import (
+    MAX_CANDIDATES,
+    VectorRepositorySQLAlchemy,
+    _candidate_limit,
+    _knn_statement,
+)
 from einstein_test.vector.similarity import (
     cosine_similarity,
     cosine_similarity_search,
@@ -198,3 +206,86 @@ def test_ac001_search_similar_method_on_repo():
     from einstein_test.vector import VectorRepository
 
     assert hasattr(VectorRepository, "search_similar")
+
+
+def test_ac001_postgres_knn_query_shape():
+    """AC-001: a query do Postgres é KNN (`<=>` + LIMIT), sem ROW_NUMBER/janela.
+
+    O formato `ORDER BY embedding <=> :q LIMIT :L` com `file_id IN (...)` é o
+    que o planner reconhece como scan do índice HNSW.
+    """
+    stmt = _knn_statement(
+        embedding=[1.0, 0.0, 0.0], file_ids=[1, 2, 3], candidate_limit=12
+    )
+    sql = str(stmt.compile(dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True}))
+    assert "<=>" in sql, "operador de distância de cosseno (KNN)"
+    assert "file_id IN (1, 2, 3)" in sql, "filtro por arquivos do chat"
+    assert "LIMIT 12" in sql, "candidate_limit no LIMIT (KNN)"
+    assert "ROW_NUMBER" not in sql, "sem janela ROW_NUMBER"
+    assert "OVER" not in sql, "sem PARTITION BY/OVER"
+
+
+def test_ac001_postgres_knn_empty_file_ids_compiles():
+    """AC-001: file_ids vazio compila para predicado falso no Postgres (sem erro)."""
+    stmt = _knn_statement(embedding=[1.0, 0.0], file_ids=[], candidate_limit=12)
+    sql = str(
+        stmt.compile(dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True})
+    )
+    assert "file_id" in sql and "IN" in sql, "predicado IN ainda presente (vazio/IN NULL)"
+
+
+def test_ac002_candidate_limit_computation():
+    """AC-002: candidate_limit = min(max(num_files*chunks_per_file, max_chunks), MAX_CANDIDATES)."""
+    assert _candidate_limit(num_files=3, chunks_per_file=2, max_chunks=12) == 12
+    assert _candidate_limit(num_files=100, chunks_per_file=2, max_chunks=12) == MAX_CANDIDATES
+    assert _candidate_limit(num_files=300, chunks_per_file=2, max_chunks=12) == MAX_CANDIDATES
+    assert _candidate_limit(num_files=10, chunks_per_file=2, max_chunks=12) == 20
+    assert _candidate_limit(num_files=3, chunks_per_file=2, max_chunks=500) == MAX_CANDIDATES
+    assert _candidate_limit(num_files=0, chunks_per_file=2, max_chunks=12) == 12
+    assert _candidate_limit(num_files=1, chunks_per_file=2, max_chunks=12) == 12
+
+
+def test_ac003_pool_truncation_documents_approximation():
+    """AC-003: quando um arquivo domina o pool KNN, o re-rank é aproximação.
+
+    Arquivo A domina o top-K do pool: os chunks de B (relevantes, porém abaixo
+    do corte global) ficam fora do pool e o resultado contém só chunks de A —
+    comportamento documentado (aproximação candidate-pool).
+    """
+    query = [1.0, 0.0]
+    rows = [
+        type("Chunk", (), {"file_id": 1, "content": "A0", "embedding": [1.0, 0.0]})(),
+        type("Chunk", (), {"file_id": 1, "content": "A1", "embedding": [0.99, 0.01]})(),
+        type("Chunk", (), {"file_id": 1, "content": "A2", "embedding": [0.98, 0.02]})(),
+        type("Chunk", (), {"file_id": 1, "content": "A3", "embedding": [0.97, 0.03]})(),
+        type("Chunk", (), {"file_id": 1, "content": "A4", "embedding": [0.96, 0.04]})(),
+        type("Chunk", (), {"file_id": 2, "content": "B0", "embedding": [0.5, 0.5]})(),
+        type("Chunk", (), {"file_id": 2, "content": "B1", "embedding": [0.4, 0.6]})(),
+    ]
+    candidate_limit = _candidate_limit(num_files=2, chunks_per_file=2, max_chunks=4)
+    assert candidate_limit == 4
+    pool = sorted(
+        rows, key=lambda c: cosine_similarity(query, list(c.embedding)), reverse=True
+    )[:candidate_limit]
+    from_pool = per_file_top_k_search(
+        query=query, rows=pool, chunks_per_file=2, max_chunks=4
+    )
+    assert [c.content for c in from_pool] == ["A0", "A1"], (
+        "aproximação: B (abaixo do corte global do pool) não participa do re-rank"
+    )
+
+
+def test_ac004_sqlite_path_intact():
+    """AC-004: caminho SQLite (fallback) inalterado e com a mesma semântica."""
+    engine = create_engine("sqlite:///:memory:")
+    chat_id, _, f1_id, f2_id, _ = _setup(engine)
+    with Session(engine) as session:
+        vrepo = VectorRepositorySQLAlchemy(session)
+        query = [1.0, 0.0, 0.0]
+        chunks = vrepo.search_similar(
+            embedding=query, chat_id=chat_id, chunks_per_file=2, max_chunks=12
+        )
+        assert len(chunks) == 4, "2 chunks por arquivo (f1+f2)"
+        assert all(c.file_id in (f1_id, f2_id) for c in chunks)
+        assert chunks[0].content == "sobre gorilas", "mais similar global primeiro"
+    engine.dispose()
