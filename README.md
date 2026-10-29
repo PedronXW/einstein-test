@@ -369,23 +369,28 @@ Copie `.env.example` para `.env` e preencha:
 ```
 .
 ├── src/einstein_test/
-│   ├── api/          # controllers FastAPI (auth, chats, messages, files)
-│   ├── models/       # SQLAlchemy models (user, chat, message, file, file_chunk)
-│   ├── repositories/ # acesso a dados (chat, message, file, user, sqlalchemy)
-│   ├── services/     # regras de negócio (auth, chat, file, message, rag, pagination)
-│   ├── schemas/      # Pydantic (requests/responses, Page[T])
-│   ├── storage/      # abstraction de object storage (MinIO/S3, in-memory)
-│   ├── tasks/        # Celery (vetorização em background)
-│   ├── vector/       # pgvector: repositório vetorial + similaridade (KNN/HNSW)
-│   ├── middleware/   # rate limiting, logging
-│   └── db/           # Base declarativa, engine, session factory
-├── alembic/          # migrations (pgvector, HNSW, backfills)
-├── tests/            # unitários, API, services, vector, migrations, integração
-├── terraform/        # infra AWS (VPC, RDS, ElastiCache, S3, ECR, ECS, ALB, OIDC)
-├── deploy/           # rollout ECS (script)
-├── docker/           # entrypoint, initdb
-└── docs/features/    # documentação das features (F-001..F-037)
+│   ├── api/            # controllers FastAPI (auth, chats, messages, files)      → [README](src/einstein_test/api/README.md)
+│   ├── models/         # SQLAlchemy models (user, chat, message, file, chunk)   → [README](src/einstein_test/models/README.md)
+│   ├── repositories/   # acesso a dados (chat, message, file, user, sqlalchemy) → [README](src/einstein_test/repositories/README.md)
+│   ├── services/       # regras de negócio (... pagination, rag)                → [README](src/einstein_test/services/README.md)
+│   ├── schemas/        # Pydantic (requests/responses, Page[T])                 → [README](src/einstein_test/schemas/README.md)
+│   ├── storage/        # abstraction de object storage (MinIO/S3, in-memory)    → [README](src/einstein_test/storage/README.md)
+│   ├── tasks/          # Celery (vetorização em background)                      → [README](src/einstein_test/tasks/README.md)
+│   ├── vector/         # pgvector: repositório vetorial + similaridade (KNN/HNSW) → [README](src/einstein_test/vector/README.md)
+│   ├── middleware/     # rate limiting, logging                                  → [README](src/einstein_test/middleware/README.md)
+│   ├── eval/           # harness de avaliação do RAG (F-038)                     → [README](src/einstein_test/eval/README.md)
+│   └── db/             # Base declarativa, engine, session factory               → [README](src/einstein_test/db/README.md)
+├── alembic/            # migrations (pgvector, HNSW, backfills)
+├── tests/              # unitários, API, services, vector, migrations, integração
+├── terraform/          # infra AWS (VPC, RDS, ElastiCache, S3, ECR, ECS, ALB, OIDC)
+├── deploy/             # rollout ECS (script)
+├── docker/             # entrypoint, initdb
+└── docs/features/      # documentação das features (F-001..F-037)
 ```
+
+Cada camada tem um `README.md` próprio com responsabilidade, fronteiras (regra
+de ouro *api → services → repositories → models*), fluxo de dados e links para
+as features relacionadas.
 
 ---
 
