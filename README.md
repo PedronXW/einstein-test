@@ -197,6 +197,8 @@ Autenticação via header `Authorization: Bearer <access_token>` (obtido no logi
 | `GET` | `/files/{file_id}` | Detalhe do arquivo |
 | `DELETE` | `/files/{file_id}` | Deletar arquivo |
 
+> **Upload de arquivos** — os endpoints de upload recebem o(s) arquivo(s) via `multipart/form-data`: campo **`file`** no upload único (`POST /chats/{chat_id}/files`) e campo repetido **`files`** no upload múltiplo (`POST /chats/{chat_id}/files/batch`).
+
 ### Collection do Insomnia
 
 Em [`docs/insomnia/einstein-test-api.json`](docs/insomnia/einstein-test-api.json) existe uma **collection exportada do Insomnia** (formato v4) com **todos** os endpoints da API, organizados por grupo e com os contratos já preenchidos (body, query params e header `Authorization`).
