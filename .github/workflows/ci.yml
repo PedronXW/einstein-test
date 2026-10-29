@@ -1,7 +1,5 @@
 name: CI
 
-# (touch p/ re-cache da validação do GH Actions — startup_failure temporário)
-
 on:
   push:
     branches: [main]
