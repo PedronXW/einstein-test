@@ -439,11 +439,11 @@
       "url": "{{ base_url }}/chats/{{ chat_id }}/files",
       "body": {
         "mimeType": "multipart/form-data",
-        "parameters": [
+        "params": [
           {
             "name": "file",
-            "value": "{{ file_path }}",
-            "fileName": "{{ file_path }}",
+            "value": "",
+            "fileName": "",
             "type": "file",
             "id": "file_upload_param"
           }
@@ -459,7 +459,7 @@
       ],
       "authentication": {},
       "metaSortKey": 301,
-      "_description": "Faz upload de um arquivo. Retorna **202** com `status=pending`; a vetorização roda em **background** (Celery/Redis, F-015). Consulte `GET /files/:file_id` para ver `status: pending|ready|error`.\n\n**Validações (F-034)**: `413` arquivo > 50MB · `422` arquivo vazio (0 bytes) · `415` extensão não permitida (`.pdf` + `text/*`: txt, md, csv, json, py, log) · `409` nome duplicado no chat (case-insensitive).\n\n**Observação**: `file_path` deve apontar para um arquivo real no seu computador."
+      "_description": "Faz upload de um arquivo. Retorna **202** com `status=pending`; a vetorização roda em **background** (Celery/Redis, F-015). Consulte `GET /files/:file_id` para ver `status: pending|ready|error`.\n\n**Validações (F-034)**: `413` arquivo > 50MB · `422` arquivo vazio (0 bytes) · `415` extensão não permitida (`.pdf` + `text/*`: txt, md, csv, json, py, log) · `409` nome duplicado no chat (case-insensitive).\n\n**Uso**: selecione um arquivo no campo `file` (multipart) antes de enviar."
     },
     {
       "_id": "req_files_upload_batch",
@@ -471,18 +471,18 @@
       "url": "{{ base_url }}/chats/{{ chat_id }}/files/batch",
       "body": {
         "mimeType": "multipart/form-data",
-        "parameters": [
+        "params": [
           {
             "name": "files",
-            "value": "{{ file_path }}",
-            "fileName": "{{ file_path }}",
+            "value": "",
+            "fileName": "",
             "type": "file",
             "id": "file_upload_batch_param1"
           },
           {
             "name": "files",
-            "value": "{{ file_path_2 }}",
-            "fileName": "{{ file_path_2 }}",
+            "value": "",
+            "fileName": "",
             "type": "file",
             "id": "file_upload_batch_param2"
           }
@@ -498,7 +498,7 @@
       ],
       "authentication": {},
       "metaSortKey": 301.5,
-      "_description": "Faz upload de **vários arquivos em uma única chamada** (F-030). Retorna **207 Multi-Status** com `{created: [FileRead...], failures: [{index, name, reason}...]}`. Falha parcial não atômica: arquivos válidos são criados e os inválidos vão para `failures` com reason (`arquivo muito grande`, `arquivo vazio`, `tipo de arquivo não suportado`, `arquivo duplicado`). Máximo de 20 arquivos por chamada (→ `413`).\n\n**Observação**: `file_path`/`file_path_2` devem apontar para arquivos reais. Adicione/remova entradas `files` conforme o lote desejado."
+      "_description": "Faz upload de **vários arquivos em uma única chamada** (F-030). Retorna **207 Multi-Status** com `{created: [FileRead...], failures: [{index, name, reason}...]}`. Falha parcial não atômica: arquivos válidos são criados e os inválidos vão para `failures` com reason (`arquivo muito grande`, `arquivo vazio`, `tipo de arquivo não suportado`, `arquivo duplicado`). Máximo de 20 arquivos por chamada (→ `413`).\n\n**Uso**: selecione arquivos nos campos `files` (multipart); adicione/remova entradas `files` conforme o lote desejado."
     },
     {
       "_id": "req_files_get",
