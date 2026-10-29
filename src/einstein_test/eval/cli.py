@@ -95,6 +95,10 @@ def _run_real(questions: list[EvalQuestion], judge, corpus_dir: Path, limit: int
     engine = create_engine_from_config()
     configure_session_factory(engine)
     embedder = get_embedder()
+    # Um único event loop para todas as perguntas: `asyncio.run` por pergunta
+    # fecha o loop e quebra o cliente async do LLM (httpx) com
+    # "RuntimeError: Event loop is closed".
+    loop = asyncio.new_event_loop()
     if limit is not None:
         questions = questions[:limit]
 
@@ -154,6 +158,7 @@ def _run_real(questions: list[EvalQuestion], judge, corpus_dir: Path, limit: int
                     name_to_id[name] = created.id
                 created_chats.append(chat.id)
                 envs[q.id] = (chat.id, name_to_id)
+                s.commit()
 
         def file_id_of(q: EvalQuestion, name: str) -> int:
             return envs[q.id][1][name]
@@ -189,7 +194,7 @@ def _run_real(questions: list[EvalQuestion], judge, corpus_dir: Path, limit: int
                         history=[],
                     )
 
-            res = asyncio.run(_call())
+            res = loop.run_until_complete(_call())
             return res.answer, res.context, res.ttft, res.latency
 
         def similarity_fn(answer: str, gold: str) -> float:
@@ -210,6 +215,8 @@ def _run_real(questions: list[EvalQuestion], judge, corpus_dir: Path, limit: int
         )
     finally:
         _cleanup()
+        if not loop.is_closed():
+            loop.close()
 
 
 def _db_host() -> str:
