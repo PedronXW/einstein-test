@@ -207,10 +207,9 @@ Como usar:
 
 1. Insomnia → **Import/Export → Import → From File** e selecione o arquivo acima;
 2. Preencha as **variáveis de ambiente da collection** (menu ⚙️ da collection):
-   - `base_url` → `http://localhost:8000` (default);
-   - `auth_token` → o `access_token` do login (usado automaticamente no header `Authorization: Bearer <token>`).
-3. Faça `POST /users` para criar um usuário e `POST /auth/login` para obter o token;
-4. Cole o token em `auth_token` e os demais requests já saem autenticados.
+   - `base_url` → `http://localhost:8000` (default).
+3. Faça `POST /users` para criar um usuário e `POST /auth/login` uma vez;
+4. Os demais requests já saem autenticados: o header `Authorization` usa um **Response tag** (`{% response 'body', 'req_auth_login', '$.access_token', 'no-history', 'never' %}`) que toma o `access_token` da resposta do login automaticamente — se ainda não há resposta, o login é disparado sozinho na primeira chamada.
 
 > O arquivo é atualizado junto com as features que alteram o contrato (ex.: F-033, F-034, F-036) — ao mudar um endpoint na API, mantenha a collection em sincronia.
 

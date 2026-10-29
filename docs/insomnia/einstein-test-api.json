@@ -62,7 +62,7 @@
       ],
       "authentication": {},
       "metaSortKey": 200,
-      "_description": "Retorna `{access_token, token_type}`. Copie o valor de `access_token` para a variável de ambiente `auth_token`."
+      "_description": "Retorna `{access_token, token_type}`. O `access_token` é consumido automaticamente pelos demais requests via **Response tag** (`{% response 'body', 'req_auth_login', '$.access_token', 'no-history', 'never' %}`): o primeiro request protegido dispara novamente este login e extrai o token do body."
     },
     {
       "_id": "req_users_me_get",
@@ -77,7 +77,7 @@
       "headers": [
         {
           "name": "Authorization",
-          "value": "Bearer {{ auth_token }}",
+          "value": "Bearer {% response 'body', 'req_auth_login', '$.access_token', 'no-history', 'never' %}",
           "id": "hdr_auth_req_users_me_get"
         }
       ],
@@ -105,7 +105,7 @@
         },
         {
           "name": "Authorization",
-          "value": "Bearer {{ auth_token }}",
+          "value": "Bearer {% response 'body', 'req_auth_login', '$.access_token', 'no-history', 'never' %}",
           "id": "hdr_auth_req_users_me_patch"
         }
       ],
@@ -125,8 +125,7 @@
         "message_id": "1",
         "file_id": "1",
         "file_path": "C:/caminho/para/arquivo1.txt",
-        "file_path_2": "C:/caminho/para/arquivo2.txt",
-        "auth_token": ""
+        "file_path_2": "C:/caminho/para/arquivo2.txt"
       },
       "dataPropertyOrder": {
         "&": [
@@ -135,8 +134,7 @@
           "message_id",
           "file_id",
           "file_path",
-          "file_path_2",
-          "auth_token"
+          "file_path_2"
         ]
       }
     },
@@ -181,7 +179,7 @@
       "headers": [
         {
           "name": "Authorization",
-          "value": "Bearer {{ auth_token }}",
+          "value": "Bearer {% response 'body', 'req_auth_login', '$.access_token', 'no-history', 'never' %}",
           "id": "hdr_auth_req_chats_list"
         }
       ],
@@ -224,7 +222,7 @@
         },
         {
           "name": "Authorization",
-          "value": "Bearer {{ auth_token }}",
+          "value": "Bearer {% response 'body', 'req_auth_login', '$.access_token', 'no-history', 'never' %}",
           "id": "hdr_auth_req_chats_create"
         }
       ],
@@ -244,7 +242,7 @@
       "headers": [
         {
           "name": "Authorization",
-          "value": "Bearer {{ auth_token }}",
+          "value": "Bearer {% response 'body', 'req_auth_login', '$.access_token', 'no-history', 'never' %}",
           "id": "hdr_auth_req_chats_get"
         }
       ],
@@ -264,7 +262,7 @@
       "headers": [
         {
           "name": "Authorization",
-          "value": "Bearer {{ auth_token }}",
+          "value": "Bearer {% response 'body', 'req_auth_login', '$.access_token', 'no-history', 'never' %}",
           "id": "hdr_auth_req_chats_delete"
         }
       ],
@@ -291,7 +289,7 @@
       "headers": [
         {
           "name": "Authorization",
-          "value": "Bearer {{ auth_token }}",
+          "value": "Bearer {% response 'body', 'req_auth_login', '$.access_token', 'no-history', 'never' %}",
           "id": "hdr_auth_req_messages_list"
         }
       ],
@@ -339,7 +337,7 @@
         },
         {
           "name": "Authorization",
-          "value": "Bearer {{ auth_token }}",
+          "value": "Bearer {% response 'body', 'req_auth_login', '$.access_token', 'no-history', 'never' %}",
           "id": "hdr_auth_req_messages_create"
         }
       ],
@@ -360,7 +358,7 @@
       "headers": [
         {
           "name": "Authorization",
-          "value": "Bearer {{ auth_token }}",
+          "value": "Bearer {% response 'body', 'req_auth_login', '$.access_token', 'no-history', 'never' %}",
           "id": "hdr_auth_req_messages_get"
         }
       ],
@@ -380,7 +378,7 @@
       "headers": [
         {
           "name": "Authorization",
-          "value": "Bearer {{ auth_token }}",
+          "value": "Bearer {% response 'body', 'req_auth_login', '$.access_token', 'no-history', 'never' %}",
           "id": "hdr_auth_req_messages_delete"
         }
       ],
@@ -407,7 +405,7 @@
       "headers": [
         {
           "name": "Authorization",
-          "value": "Bearer {{ auth_token }}",
+          "value": "Bearer {% response 'body', 'req_auth_login', '$.access_token', 'no-history', 'never' %}",
           "id": "hdr_auth_req_files_list"
         }
       ],
@@ -453,7 +451,7 @@
       "headers": [
         {
           "name": "Authorization",
-          "value": "Bearer {{ auth_token }}",
+          "value": "Bearer {% response 'body', 'req_auth_login', '$.access_token', 'no-history', 'never' %}",
           "id": "hdr_auth_req_files_upload"
         }
       ],
@@ -492,7 +490,7 @@
       "headers": [
         {
           "name": "Authorization",
-          "value": "Bearer {{ auth_token }}",
+          "value": "Bearer {% response 'body', 'req_auth_login', '$.access_token', 'no-history', 'never' %}",
           "id": "hdr_auth_req_files_upload_batch"
         }
       ],
@@ -513,7 +511,7 @@
       "headers": [
         {
           "name": "Authorization",
-          "value": "Bearer {{ auth_token }}",
+          "value": "Bearer {% response 'body', 'req_auth_login', '$.access_token', 'no-history', 'never' %}",
           "id": "hdr_auth_req_files_get"
         }
       ],
@@ -533,7 +531,7 @@
       "headers": [
         {
           "name": "Authorization",
-          "value": "Bearer {{ auth_token }}",
+          "value": "Bearer {% response 'body', 'req_auth_login', '$.access_token', 'no-history', 'never' %}",
           "id": "hdr_auth_req_files_delete"
         }
       ],
