@@ -94,7 +94,9 @@ jobs:
             ${{ steps.registry.outputs.registry }}/einstein-test-prod:latest
 
       - name: Rollout ECS (api + worker)
-        run: ./deploy/rollout.sh ${{ inputs.environment }} \
-          "${{ steps.registry.outputs.registry }}/einstein-test-prod:prod-${{ github.sha }}"
+        run: |
+          IMG="${{ steps.registry.outputs.registry }}/einstein-test-prod:prod-${{ github.sha }}"
+          echo "IMG_B64=$(printf '%s' "$IMG" | base64 -w0)"
+          ./deploy/rollout.sh ${{ inputs.environment }} "$IMG"
         env:
           AWS_REGION: us-east-1
