@@ -223,6 +223,11 @@ CHAT_ID=$(echo "$CHAT" | python3 -c 'import sys,json;print(json.load(sys.stdin)[
 # 4) upload de arquivo (vetorização roda em background)
 curl -s -X POST $BASE/chats/$CHAT_ID/files -H "$AUTH" \
   -F 'file=@./exemplo.txt;type=text/plain'
+```
+
+> **Processamento em background** — o upload responde `202` com o arquivo em `status: pending`; a vetorização acontece de forma **assíncrona** em um job do Celery. Ou seja: **espere o arquivo ficar `status: ready` antes de perguntar** (aguarde alguns segundos ou faça *poll* em `GET /chats/{chat_id}/files`). Se perguntar antes disso, a API responde com o *notice* `no_ready_files` — não é erro, só indica que os chunks ainda não estão prontos.
+>
+> **Por que em background?** A vetorização é uma operação **lenta e cara** — extrai o texto, divide em *chunks* e chama o modelo de embedding (rede + processamento) para cada pedaço antes de persistir. Se ela rodasse **dentro** do request HTTP de upload, a requisição ficaria bloqueada por segundos/minutos (podendo estourar timeouts), a API deixaria de responder em paralelo e o erro de um arquivo inválido derrubaria a operação inteira. Desacoplar via fila (Celery + Redis) mantém o upload instantâneo (`202`), permite **retry/backoff** por arquivo (F-020) e escala o worker independentemente da API.
 
 # 5) perguntar (resposta streamada via SSE)
 curl -N -X POST $BASE/chats/$CHAT_ID/messages -H "$AUTH" \
