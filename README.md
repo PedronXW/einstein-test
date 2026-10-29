@@ -452,9 +452,6 @@ para o projeto valer como produto em produção. Prioridade indicativa.
 - **Role de CI `github-infra` com escopo amplo** — anexa ~13 políticas
   gerenciadas (quase-admin) para o Terraform provisionar o stack. Refatorar
   para *least-privilege* (sobretudo IAM) é pendente.
-- **Chave dos modelos** em uso é a da `.env`/Secret local — a **chave fornecida
-  pela organização para o projeto ainda não foi configurada** (o provider é o
-  mesmo `spillway.ensinoeinstein.com`, então a troca é pontual).
 - Secrets gerenciados por Terraform: o Secret Manager é reescrito a cada deploy
   a partir do secret do GitHub (fonte da verdade) — cuidado com rotatividade.
 
