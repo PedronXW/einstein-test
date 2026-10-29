@@ -1,0 +1,5 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-001	search_similar (Postgres) usa query KNN: ORDER BY embedding <=> :q LIMIT candidate_limit com file_id IN (arquivos do chat); sem ROW_NUMBER/janela	T-SPEC
+AC-002	U-001	candidate_limit = min(max(num_files * chunks_per_file, max_chunks), MAX_CANDIDATES) com MAX_CANDIDATES = 200	T-SPEC
+AC-003	U-002	resultado final via per_file_top_k_search (re-rank): max chunks_per_file por arquivo + teto max_chunks, ordem global por similaridade	T-SPEC
+AC-004	U-002	caminho SQLite inalterado; testes existentes de busca por similaridade seguem verdes (semantica preservada)	T-SPEC

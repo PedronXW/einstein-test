@@ -1,0 +1,5 @@
+#id	tipo	status	texto
+A-001	A	confirmed	candidate-pool KNN + re-rank reproduz a semantica exata nos casos normais; em caso patologico (um arquivo domina o top de candidatos) pode haver aproximacao, mitigada por candidate_limit = num_files * chunks_per_file e cap MAX_CANDIDATES
+A-002	A	confirmed	MAX_CANDIDATES = 200 e tuning; mora no modulo do repositorio vetorial (fonte unica)
+A-003	A	confirmed	sem migration nova: o indice HNSW ja existe no banco
+A-004	A	confirmed	WHERE file_id IN (lista) ORDER BY embedding <=> :q LIMIT :L torna o HNSW usavel pelo planner quando vantajoso (chat com muitos chunks — validado por EXPLAIN ANALYZE); com filtro seletivo de arquivos o planner prefere o indice FK (ix_file_chunks_file_id) + top-N sort, que e correto e rapido (sem tradeoff de recall)
