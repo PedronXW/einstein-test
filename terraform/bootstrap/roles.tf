@@ -12,7 +12,11 @@ locals {
 resource "aws_iam_openid_connect_provider" "github" {
   url            = "https://token.actions.githubusercontent.com"
   client_id_list = ["sts.amazonaws.com"]
+  # Thumbprints atuais do GitHub (rotacionados) + os antigos (cobertura).
   thumbprint_list = [
+    "ca435a638a8cfed6b89364e064e08460b91c6250",
+    "38e9b30b3a023a1b72309921a69a42fcc496c42c",
+    "4f3e9ad8c9a6f5eb3173006f4fa630e28f43dce9",
     "6938fd4d98bab03faadb97b34396831e3780aea1",
     "a031c6f5c7b556ffd07e14b56ec4dc8fed121de2",
   ]
@@ -36,7 +40,13 @@ data "aws_iam_policy_document" "github_assume" {
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_repo}:ref:refs/heads/main"]
+      # O GitHub anexa IDs de entidade ao sub (formato atual):
+      #   repo:OWNER@<owner_id>/REPO@<repo_id>:ref:refs/heads/main
+      # Os `@*` toleram os IDs; o resto restringe repo + branch main.
+      values = [
+        "repo:${var.github_repo}:ref:refs/heads/main",
+        "repo:${replace(var.github_repo, "/", "@*/")}@*:ref:refs/heads/main",
+      ]
     }
   }
 }
@@ -56,6 +66,9 @@ locals {
     "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess",
     "arn:aws:iam::aws:policy/IAMFullAccess",
     "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess",
+    "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess",
+    "arn:aws:iam::aws:policy/CloudWatchFullAccess",
+    "arn:aws:iam::aws:policy/AutoScalingFullAccess",
   ]
 }
 
@@ -64,7 +77,10 @@ resource "aws_iam_role" "github_infra" {
   assume_role_policy = data.aws_iam_policy_document.github_assume.json
   managed_policy_arns = concat(
     local.github_infra_policies,
-    [aws_iam_policy.github_infra_elb.arn],
+    [
+      aws_iam_policy.github_infra_elb.arn,
+      aws_iam_policy.github_infra_autoscaling.arn,
+    ],
   )
 
   tags = { Name = "${local.name}-github-infra" }
@@ -84,6 +100,21 @@ data "aws_iam_policy_document" "github_infra_elb" {
 resource "aws_iam_policy" "github_infra_elb" {
   name   = "${local.name}-github-infra-elb"
   policy = data.aws_iam_policy_document.github_infra_elb.json
+}
+
+# Application Auto Scaling (aws_appautoscaling_*) — a gerenciada
+# AutoScalingFullAccess não cobre application-autoscaling neste ambiente.
+data "aws_iam_policy_document" "github_infra_autoscaling" {
+  statement {
+    sid       = "ApplicationAutoScalingFull"
+    actions   = ["application-autoscaling:*"]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_policy" "github_infra_autoscaling" {
+  name   = "${local.name}-github-infra-autoscaling"
+  policy = data.aws_iam_policy_document.github_infra_autoscaling.json
 }
 
 # Role do job de APP no CI (push ECR + rollout ECS) — escopo mínimo.
