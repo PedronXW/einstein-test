@@ -1,6 +1,6 @@
 """Endpoints REST de file."""
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
@@ -11,6 +11,7 @@ from einstein_test.models import User
 from einstein_test.repositories.chat import ChatRepositorySQLAlchemy
 from einstein_test.repositories.file import FileRepositorySQLAlchemy
 from einstein_test.schemas.file import FileBatchFailure, FileBatchResult, FileRead
+from einstein_test.schemas.page import Page
 from einstein_test.services.chat import ChatNotFoundError, ChatService
 from einstein_test.services.file import (
     MAX_UPLOAD_SIZE,
@@ -21,6 +22,12 @@ from einstein_test.services.file import (
     FileService,
     FileTooLargeError,
     UnsupportedFileTypeError,
+)
+from einstein_test.services.pagination import (
+    DEFAULT_PAGE_SIZE,
+    MAX_PAGE,
+    MAX_PAGE_SIZE,
+    MIN_PAGE,
 )
 
 logger = get_logger("api.files")
@@ -141,19 +148,26 @@ async def upload_files_batch(
     )
 
 
-@router.get("/chats/{chat_id}/files", response_model=list[FileRead])
+@router.get("/chats/{chat_id}/files", response_model=Page[FileRead])
 def list_files(
     chat_id: int,
+    page: int = Query(MIN_PAGE, ge=MIN_PAGE, le=MAX_PAGE),
+    page_size: int = Query(DEFAULT_PAGE_SIZE, ge=MIN_PAGE, le=MAX_PAGE_SIZE),
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
-) -> list[FileRead]:
+) -> Page[FileRead]:
     try:
         _ensure_chat_owned(session, chat_id, current_user.id)
     except ChatNotFoundError:
         raise HTTPException(status_code=404, detail="chat não encontrado") from None
     service = _file_service(session)
-    files = service.list_files(chat_id=chat_id)
-    return [FileRead.model_validate(f) for f in files]
+    items, total = service.list_files_page(chat_id=chat_id, page=page, page_size=page_size)
+    return Page[FileRead].build(
+        items=[FileRead.model_validate(f) for f in items],
+        total=total,
+        page=page,
+        page_size=page_size,
+    )
 
 
 @router.get("/files/{file_id}", response_model=FileRead)

@@ -3,7 +3,7 @@
 import json
 from collections.abc import AsyncIterator
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
@@ -17,12 +17,19 @@ from einstein_test.repositories.file import FileRepositorySQLAlchemy
 from einstein_test.repositories.message import MessageRepositorySQLAlchemy
 from einstein_test.repositories.user import UserRepositorySQLAlchemy
 from einstein_test.schemas.message import MessageCreate, MessageRead
+from einstein_test.schemas.page import Page
 from einstein_test.services.chat import ChatNotFoundError, ChatService
 from einstein_test.services.file import FileService
 from einstein_test.services.message import (
     MAX_HISTORY,
     MessageNotFoundError,
     MessageService,
+)
+from einstein_test.services.pagination import (
+    DEFAULT_PAGE_SIZE,
+    MAX_PAGE,
+    MAX_PAGE_SIZE,
+    MIN_PAGE,
 )
 from einstein_test.services.rag import RagService, get_rag_service
 from einstein_test.services.user import UserService
@@ -190,19 +197,26 @@ async def create_message(
     )
 
 
-@router.get("/chats/{chat_id}/messages", response_model=list[MessageRead])
+@router.get("/chats/{chat_id}/messages", response_model=Page[MessageRead])
 def list_messages(
     chat_id: int,
+    page: int = Query(MIN_PAGE, ge=MIN_PAGE, le=MAX_PAGE),
+    page_size: int = Query(DEFAULT_PAGE_SIZE, ge=MIN_PAGE, le=MAX_PAGE_SIZE),
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
-) -> list[MessageRead]:
+) -> Page[MessageRead]:
     try:
         _ensure_chat_owned(session, chat_id, current_user.id)
     except ChatNotFoundError:
         raise HTTPException(status_code=404, detail="chat não encontrado") from None
     service = _message_service(session)
-    messages = service.list_messages(chat_id=chat_id)
-    return [MessageRead.model_validate(m) for m in messages]
+    items, total = service.list_messages_page(chat_id=chat_id, page=page, page_size=page_size)
+    return Page[MessageRead].build(
+        items=[MessageRead.model_validate(m) for m in items],
+        total=total,
+        page=page,
+        page_size=page_size,
+    )
 
 
 @router.get("/messages/{message_id}", response_model=MessageRead)
