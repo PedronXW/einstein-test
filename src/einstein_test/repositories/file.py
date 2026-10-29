@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Protocol
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from einstein_test.models.file import File
@@ -21,7 +21,14 @@ class FileRepository(Protocol):
         size: int = 0,
     ) -> File: ...
     def get_by_id(self, file_id: int) -> File | None: ...
-    def list(self, chat_id: int) -> list[File]: ...
+    def list(
+        self,
+        chat_id: int,
+        *,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> list[File]: ...
+    def count(self, chat_id: int) -> int: ...
     def update_chunk_ids(
         self, file_id: int, chunk_ids: list[int], vector_reference: str
     ) -> None: ...
@@ -55,16 +62,37 @@ class FileRepositorySQLAlchemy:
         )
         return self.session.scalar(stmt)
 
-    def list(self, chat_id: int) -> list[File]:
+    def list(
+        self,
+        chat_id: int,
+        *,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> list[File]:
         stmt = (
             select(File)
             .where(
                 File.chat_id == chat_id,
                 File.deleted_at.is_(None),
             )
-            .order_by(File.created_at.desc())
+            .order_by(File.created_at.desc(), File.id.desc())
         )
+        if limit is not None:
+            stmt = stmt.limit(limit)
+        if offset is not None:
+            stmt = stmt.offset(offset)
         return list(self.session.scalars(stmt))
+
+    def count(self, chat_id: int) -> int:
+        stmt = (
+            select(func.count())
+            .select_from(File)
+            .where(
+                File.chat_id == chat_id,
+                File.deleted_at.is_(None),
+            )
+        )
+        return int(self.session.scalar(stmt) or 0)
 
     def update_chunk_ids(
         self, file_id: int, chunk_ids: list[int], vector_reference: str

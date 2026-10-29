@@ -264,6 +264,16 @@ class FileService:
     def list_files(self, chat_id: int) -> list[File]:
         return self.repository.list(chat_id=chat_id)
 
+    def list_files_page(
+        self, chat_id: int, page: int, page_size: int
+    ) -> tuple[list[File], int]:
+        offset = (page - 1) * page_size
+        items = self.repository.list(
+            chat_id=chat_id, limit=page_size, offset=offset
+        )
+        total = self.repository.count(chat_id=chat_id)
+        return items, total
+
     def files_state(self, chat_id: int) -> dict[str, int]:
         """Contagens de status dos files do chat (ready/pending/error)."""
         state = {

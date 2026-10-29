@@ -3,7 +3,7 @@
 from datetime import UTC, datetime
 from typing import Protocol
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from einstein_test.models.message import Message
@@ -14,7 +14,14 @@ class MessageRepository(Protocol):
         self, chat_id: int, content: str, role: str | None = None
     ) -> Message: ...
     def get_by_id(self, message_id: int) -> Message | None: ...
-    def list(self, chat_id: int) -> list[Message]: ...
+    def list(
+        self,
+        chat_id: int,
+        *,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> list[Message]: ...
+    def count(self, chat_id: int) -> int: ...
     def delete(self, message_id: int) -> None: ...
 
 
@@ -39,7 +46,13 @@ class MessageRepositorySQLAlchemy:
         )
         return self.session.scalar(stmt)
 
-    def list(self, chat_id: int) -> list[Message]:
+    def list(
+        self,
+        chat_id: int,
+        *,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> list[Message]:
         stmt = (
             select(Message)
             .where(
@@ -48,7 +61,22 @@ class MessageRepositorySQLAlchemy:
             )
             .order_by(Message.created_at.asc(), Message.id.asc())
         )
+        if limit is not None:
+            stmt = stmt.limit(limit)
+        if offset is not None:
+            stmt = stmt.offset(offset)
         return list(self.session.scalars(stmt))
+
+    def count(self, chat_id: int) -> int:
+        stmt = (
+            select(func.count())
+            .select_from(Message)
+            .where(
+                Message.chat_id == chat_id,
+                Message.deleted_at.is_(None),
+            )
+        )
+        return int(self.session.scalar(stmt) or 0)
 
     def delete(self, message_id: int) -> None:
         message = self.session.get(Message, message_id)
