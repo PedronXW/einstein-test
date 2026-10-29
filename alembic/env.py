@@ -71,11 +71,16 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         if connection.dialect.name == "postgresql":
-            connection.execute(text("SELECT pg_advisory_lock(hashtext('einstein_alembic'))"))
+            # Adquire o advisory lock em AUTOCOMMIT para NÃO abrir transação
+            # antes do alembic: se o lock dispara o autobegin do SQLAlchemy,
+            # o `context.begin_transaction()` do alembic vira no-op e todo o
+            # DDL é rolado de volta quando a conexão fecha (banco fica vazio).
+            lock_conn = connection.execution_options(isolation_level="AUTOCOMMIT")
+            lock_conn.execute(text("SELECT pg_advisory_lock(hashtext('einstein_alembic'))"))
             try:
                 _run(connection)
             finally:
-                connection.execute(text("SELECT pg_advisory_unlock(hashtext('einstein_alembic'))"))
+                lock_conn.execute(text("SELECT pg_advisory_unlock(hashtext('einstein_alembic'))"))
         else:
             _run(connection)
 
