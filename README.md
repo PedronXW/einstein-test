@@ -197,6 +197,31 @@ Autenticação via header `Authorization: Bearer <access_token>` (obtido no logi
 | `GET` | `/files/{file_id}` | Detalhe do arquivo |
 | `DELETE` | `/files/{file_id}` | Deletar arquivo |
 
+### Collection do Insomnia
+
+Em [`docs/insomnia/einstein-test-api.json`](docs/insomnia/einstein-test-api.json) existe uma **collection exportada do Insomnia** (formato v4) com **todos** os endpoints da API, organizados por grupo e com os contratos já preenchidos (body, query params e header `Authorization`).
+
+Como usar:
+
+1. Insomnia → **Import/Export → Import → From File** e selecione o arquivo acima;
+2. Preencha as **variáveis de ambiente da collection** (menu ⚙️ da collection):
+   - `base_url` → `http://localhost:8000` (default);
+   - `auth_token` → o `access_token` do login (usado automaticamente no header `Authorization: Bearer <token>`).
+3. Faça `POST /users` para criar um usuário e `POST /auth/login` para obter o token;
+4. Cole o token em `auth_token` e os demais requests já saem autenticados.
+
+> O arquivo é atualizado junto com as features que alteram o contrato (ex.: F-033, F-034, F-036) — ao mudar um endpoint na API, mantenha a collection em sincronia.
+
+### Alteração do modelo de LLM por usuário
+
+Cada usuário escolhe o modelo de LLM usado nas respostas do RAG (feature [F-022](docs/features/F-022-user-model.md)):
+
+- **Consultar**: `GET /users/me` → `{..., "model": "azure/gpt-5-mini"}`;
+- **Alterar por conta própria**: `PATCH /users/me {"model": "azure/gpt-6-luna"}` → devolve o perfil atualizado;
+- **Voltar ao padrão**: `PATCH /users/me {"model": null}` → o usuário volta ao default (`OPENAI_CHAT_MODEL`, default `azure/gpt-5-mini`);
+- O modelo precisa pertencer à **allowlist** `ALLOWED_MODELS` (definida por env, **somente o operador** altera) — modelo fora da lista → `422`;
+- `POST /chats/{chat_id}/messages` revalida o modelo do usuário autenticado contra a allowlist a **cada request** (se o operador remover o modelo do env, a API usa o default, não quebra).
+
 ### Exemplo de fluxo completo
 
 ```bash
@@ -385,7 +410,8 @@ Copie `.env.example` para `.env` e preencha:
 ├── terraform/          # infra AWS (VPC, RDS, ElastiCache, S3, ECR, ECS, ALB, OIDC)
 ├── deploy/             # rollout ECS (script)
 ├── docker/             # entrypoint, initdb
-└── docs/features/      # documentação das features (F-001..F-037)
+├── docs/features/      # documentação das features (F-001..F-038)
+└── docs/insomnia/      # collection Insomnia com todos os endpoints da API
 ```
 
 Cada camada tem um `README.md` próprio com responsabilidade, fronteiras (regra
