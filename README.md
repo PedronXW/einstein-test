@@ -25,6 +25,7 @@
 - [Principais decisões técnicas](#principais-decisões-técnicas)
 - [Como a IA foi usada no desenvolvimento](#como-a-ia-foi-usada-no-desenvolvimento)
 - [Documentação das features](#documentação-das-features)
+- [Pendências e dívidas técnicas](#pendências-e-dívidas-técnicas)
 
 ---
 
@@ -429,3 +430,50 @@ A aplicação também roda em **produção** na AWS (infra gerenciada por Terraf
 - **API:** <http://einstein-prod-alb-1485984983.us-east-1.elb.amazonaws.com>
 - **Deploy manual:** GitHub Actions → workflow **Deploy** → *Run workflow* (branch `main`, environment `prod`)
 - Stack: ECS Fargate (api + worker), RDS PostgreSQL 15.19, ElastiCache Redis 7, S3, ALB, Secrets Manager, CloudWatch.
+
+---
+
+## Pendências e dívidas técnicas
+
+Documentadas de forma **transparente** — pontos que ainda não foram fechados
+para o projeto valer como produto em produção. Prioridade indicativa.
+
+### Segurança e rede
+- **Sem HTTPS/TLS e sem domínio próprio** — o acesso é via DNS do ALB
+  (`http://einstein-prod-alb-...elb.amazonaws.com`), em **HTTP puro**. Falta
+  `aws_acm_certificate` + listener 443 + (opcional) Route 53. **Bloqueante
+  para uso real** — qualquer dado trafegado é texto claro.
+- **SG do ALB** libera as portas 80/443 para `0.0.0.0/0` (sem WAF/geo-fence).
+- **Role de CI `github-infra` com escopo amplo** — anexa ~13 políticas
+  gerenciadas (quase-admin) para o Terraform provisionar o stack. Refatorar
+  para *least-privilege* (sobretudo IAM) é pendente.
+- **Chave dos modelos** em uso é a da `.env`/Secret local — a **chave fornecida
+  pela organização para o projeto ainda não foi configurada** (o provider é o
+  mesmo `spillway.ensinoeinstein.com`, então a troca é pontual).
+- Secrets gerenciados por Terraform: o Secret Manager é reescrito a cada deploy
+  a partir do secret do GitHub (fonte da verdade) — cuidado com rotatividade.
+
+### Observabilidade
+- Só **CloudWatch logs** + alarmes de autoscaling. Sem métricas de negócio
+  (latência do RAG por etapa, count de respostas, recall em produção), sem
+  dashboards e sem alertas proativos.
+
+### Avaliação e qualidade de IA (harness F-038)
+- O harness chama o RAG **in-process** — não passa pela camada HTTP (auth,
+  rate limit, SSE, e o **gate de `no_ready_files`**); por isso, pergunta fora do
+  corpus pode ser respondida (alucinação) em vez de receber o *notice* da API.
+- **Juiz LLM leniente** com resposta não-ancorada (nota alta para caso sem
+  contexto) — calibração do rubric pendente.
+- A **base de conhecimento da avaliação ainda é sintética** (corpus de exemplo);
+  as apostilas reais do projeto não foram ingeridas/documentadas como base.
+- Avaliação sem *distractors* por pergunta → recall otimista vs. chats reais.
+- **Testes de integração são opt-in** (`RUN_INTEGRATION=1`) — não rodam
+  automaticamente no CI.
+
+### Infra/hospedagem
+- Publicado em **AWS** (stack com custo) — **não** em plataforma gratuita do
+  tipo "Vercel like". Portar para Render/Railway free tier é possível, com
+  limitações (cold start, armazenamento, pgvector).
+- Sem DNS próprio; o link público é o do ALB (muda se o ALB for recriado).
+
+---
