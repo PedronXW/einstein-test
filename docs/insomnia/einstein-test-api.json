@@ -65,6 +65,55 @@
       "_description": "Retorna `{access_token, token_type}`. Copie o valor de `access_token` para a variável de ambiente `auth_token`."
     },
     {
+      "_id": "req_users_me_get",
+      "parentId": "grp_auth",
+      "type": "request",
+      "_type": "request",
+      "name": "GET /users/me — Perfil do usuário",
+      "method": "GET",
+      "url": "{{ base_url }}/users/me",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ auth_token }}",
+          "id": "hdr_auth_req_users_me_get"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 300
+    },
+    {
+      "_id": "req_users_me_patch",
+      "parentId": "grp_auth",
+      "type": "request",
+      "_type": "request",
+      "name": "PATCH /users/me — Atualizar modelo do usuário",
+      "method": "PATCH",
+      "url": "{{ base_url }}/users/me",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"model\": \"azure/gpt-5-mini\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "id": "hdr_users_me_ct"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ auth_token }}",
+          "id": "hdr_auth_req_users_me_patch"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 400,
+      "_description": "Atualiza o perfil (F-022). **Contrato**: `TODOS` os demais campos são ignorados/rejeitados (`extra=forbid`). Modelos válidos (env `ALLOWED_MODELS`): `azure/gpt-5-mini`, `azure/gpt-6-luna`. Modelo não suportado → `422`."
+    },
+    {
       "_id": "env_base",
       "parentId": "wrk_einstein",
       "type": "environment",
@@ -92,20 +141,20 @@
       }
     },
     {
-      "_id": "grp_hello",
+      "_id": "grp_health",
       "parentId": "wrk_einstein",
       "type": "request_group",
       "_type": "request_group",
-      "name": "Health / Hello"
+      "name": "Health"
     },
     {
-      "_id": "req_hello",
-      "parentId": "grp_hello",
+      "_id": "req_health",
+      "parentId": "grp_health",
       "type": "request",
       "_type": "request",
-      "name": "GET / — Hello World",
+      "name": "GET /health — Healthcheck",
       "method": "GET",
-      "url": "{{ base_url }}/",
+      "url": "{{ base_url }}/health",
       "body": {},
       "parameters": [],
       "headers": [],
@@ -151,7 +200,8 @@
           "value": "20",
           "disabled": false
         }
-      ]
+      ],
+      "_description": "Lista chats com **envelope paginado (F-036)**: `{items, page, page_size, total, total_pages}` (ordem `created_at desc`). Defaults `page=1`/`page_size=20`, máximo `page_size=100`. `page<1`, `page_size<1` ou `page_size>100` → `422`. Página além do fim → `items: []` com `total` real."
     },
     {
       "_id": "req_chats_create",
@@ -260,7 +310,8 @@
           "value": "20",
           "disabled": false
         }
-      ]
+      ],
+      "_description": "Lista mensagens do chat com **envelope paginado (F-036)**: `{items, page, page_size, total, total_pages}`. Ordem **cronológica ascendente** (página 1 = mais antigas). Defaults `page=1`/`page_size=20`, máximo `page_size=100`. `page<1`, `page_size<1` ou `page_size>100` → `422`."
     },
     {
       "_id": "req_messages_create",
@@ -375,7 +426,8 @@
           "value": "20",
           "disabled": false
         }
-      ]
+      ],
+      "_description": "Lista arquivos do chat com **envelope paginado (F-036)**: `{items, page, page_size, total, total_pages}` (ordem `created_at desc`). Defaults `page=1`/`page_size=20`, máximo `page_size=100`. `page<1`, `page_size<1` ou `page_size>100` → `422`."
     },
     {
       "_id": "req_files_upload",
