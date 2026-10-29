@@ -1,0 +1,6 @@
+#id	tipo	status	texto
+A-001	A	confirmed	isolamento por pergunta: 1 chat por pergunta, ingerindo so os docs de expected_files
+A-002	A	confirmed	metricas de retrieval em nivel de arquivo (expected_files), nao de chunk
+A-003	A	confirmed	juiz de LLM usa modelo configuravel EVAL_JUDGE_MODEL (default azure/gpt-6-luna) sobre o mesmo provedor OpenAI-compativel
+A-004	A	confirmed	smoke no CI usa fakes (zero tokens); eval completo e opt-in com chave real e --limit para controlar custo
+A-005	A	confirmed	dataset hibrido inicial pequeno (eval/dataset/, ~6 perguntas) autorado por nos e expansivel

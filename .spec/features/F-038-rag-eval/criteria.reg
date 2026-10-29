@@ -1,0 +1,7 @@
+#AC-id	U-id	descricao	T-id
+AC-001	U-002	metricas de retrieval: recall@k (k=5,12), MRR@k e hit-rate@1 por pergunta a partir dos expected_files; funcoes puras testaveis	T-SPEC
+AC-002	U-003	Judge Protocol com FakeJudge deterministico e LLMJudge; veredito com correctness, faithfulness, coverage (1-5)	T-SPEC
+AC-003	U-001	runner de geracao coleta resposta (via rag_service.astream), contexto e metricas de perf (TTFT, latencia total) e tokens	T-SPEC
+AC-004	U-004	CLI executa retrieval/geracao/full e gera relatorio (Markdown/HTML/JSON)	T-SPEC
+AC-005	U-005	smoke deterministico (FakeEmbedder + FakeChatLLM + FakeJudge) roda no CI e valida dataset, metricas, geracao, juiz e relatorio sem chave	T-SPEC
+AC-006	U-006	similaridade semantica (cosine answer x gold) e robustez: chat sem arquivos -> notice; pergunta fora do corpus -> nao fabrica fato	T-SPEC
