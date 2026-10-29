@@ -5,7 +5,7 @@
 ![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.162-009688?logo=fastapi&logoColor=white)
 ![PostgreSQL+pgvector](https://img.shields.io/badge/PostgreSQL-15%2B-4169E1?logo=postgresql&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-450%20passed-brightgreen)
+![Tests](https://img.shields.io/badge/tests-475%20passed-brightgreen)
 ![Lint](https://img.shields.io/badge/ruff-lint%20ok-brightgreen)
 
 ---
@@ -19,6 +19,7 @@
 - [Como executar](#como-executar)
 - [Endpoints da API](#endpoints-da-api)
 - [Como testar](#como-testar)
+- [Avaliação do RAG (harness)](#avaliação-do-rag-harness)
 - [Variáveis de ambiente](#variáveis-de-ambiente)
 - [Estrutura do projeto](#estrutura-do-projeto)
 - [Principais decisões técnicas](#principais-decisões-técnicas)
@@ -260,6 +261,74 @@ uv run pytest -m integration
 
 ---
 
+## Avaliação do RAG (harness)
+
+O projeto inclui um **harness de avaliação** (`src/einstein_test/eval/`, feature
+F-038) para medir, por evidência, a qualidade do RAG:
+
+| Dimensão | O que mede |
+|---|---|
+| **Retrieval** | `recall@5`, `recall@12`, `MRR@5`, `hit@1` — o contexto certo foi recuperado? |
+| **Assertividade** | `correctness` — resposta correta vs. gold (1–5) |
+| **Fidelidade** | `faithfulness` — resposta ancorada no contexto, sem alucinação (1–5) |
+| **Cobertura** | `coverage` — a resposta cobre a pergunta (1–5) |
+| **Robustez** | pergunta fora do corpus não deve fabricar resposta |
+| **Perf/custo** | TTFT, latência total, tokens por pergunta |
+| **Similaridade** | cosseno entre resposta e gold (paráfrases penalizam um pouco) |
+
+### Dataset gold
+`eval/dataset/dev.jsonl` — perguntas com `expected_files` (quais documentos
+contêm a resposta) e `gold_answer` (resposta ideal). O corpus fica em
+`eval/corpus/` (documentos sintéticos com fatos exatos + documentos naturais).
+
+### Como rodar
+
+**Smoke determinístico (fakes, sem chave — CI):**
+```bash
+uv run python -m einstein_test.eval --backend fake --limit 2 --format md
+```
+
+**Avaliação real** (requer `OPENAI_API_KEY`, infra de pé e banco local):
+```bash
+docker compose up -d postgres minio redis
+uv run alembic upgrade head
+set -a; source .env; set +a
+export DATABASE_URL=postgresql://einstein:einstein@localhost:5432/einstein
+
+uv run python -m einstein_test.eval --backend real --judge llm \
+  --format html --out eval/reports/latest.html
+```
+
+Variantes úteis: `--limit N` (controla custo), `--judge fake` (sem custo de
+juiz), `--format md|html|json`. O `--backend real` vetoriza o corpus de
+verdade, roda o RAG real e **limpa** as linhas criadas no banco ao final; só
+roda em banco local sem `EVAL_ALLOW_NON_LOCAL=1`.
+
+### O que usa o sistema real vs. parametrizado
+- **Real**: embeddings, busca pgvector (KNN/HNSW), geração via LLM, storage.
+- **Parametrizado (ground truth)**: as perguntas/`expected_files`/`gold_answer`
+  — o sistema nunca vê o gold durante a execução.
+
+### Erros encontrados e corrigidos durante o desenvolvimento
+- **`RuntimeError: Event loop is closed`** — o run por pergunta usando
+  `asyncio.run()` fechava o event loop enquanto o cliente async do LLM
+  (langchain/httpx) ainda o referenciava. Corrigido reutilizando **um único
+  event loop** em todas as perguntas.
+- **`recall@5 = 0.0` no backend real** — a ingestão do corpus rodava dentro de
+  `with Session(...)` sem commit; no exit o rollback descartava as linhas e os
+  chunks nunca eram persistidos. Corrigido com `s.commit()` ao fim da ingestão.
+
+### Limitações conhecidas
+- O harness chama o RAG **in-process** (não passa pela camada HTTP); o gate de
+  `no_ready_files` da API não é exercitado — uma pergunta fora do corpus pode
+  ser respondida (alucinação) em vez de receber o *notice* da aplicação.
+- O `LLMJudge` ainda é **leniente** com resposta não-ancorada (scorou `5.0` em
+  fidelidade para um caso sem contexto). Ajuste de rubric pendente.
+- Cada pergunta usa um chat "limpo" (só os arquivos esperados, sem
+  *distractors*) — recall otimista vs. chats ruidosos.
+
+---
+
 ## Variáveis de ambiente
 
 Copie `.env.example` para `.env` e preencha:
@@ -344,11 +413,12 @@ O fluxo completo do pipeline: **especificar → testar → implementar → docum
 
 ## Documentação das features
 
-Cada feature (F-001..F-037) tem documentação própria em [`docs/features/`](docs/features/), incluindo:
+Cada feature (F-001..F-038) tem documentação própria em [`docs/features/`](docs/features/), incluindo:
 
 - `F-011` — busca por similaridade (RAG) · `F-015` — Celery · `F-016` — rate limiting
 - `F-017` — índice HNSW · `F-026` — CI · `F-033` — infra local · `F-035` — infra AWS
 - `F-036` — paginação nos list endpoints · `F-037` — busca HNSW (candidate-pool + re-rank)
+- `F-038` — harness de avaliação do RAG (assertividade, retrieval, robustez, perf)
 
 ---
 
