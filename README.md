@@ -24,6 +24,7 @@
 - [Estrutura do projeto](#estrutura-do-projeto)
 - [Principais decisões técnicas](#principais-decisões-técnicas)
 - [Como a IA foi usada no desenvolvimento](#como-a-ia-foi-usada-no-desenvolvimento)
+- [Specs — o fluxo de desenvolvimento](#specs--o-fluxo-de-desenvolvimento)
 - [Documentação das features](#documentação-das-features)
 - [Pendências e dívidas técnicas](#pendências-e-dívidas-técnicas)
 
@@ -446,6 +447,46 @@ O desenvolvimento foi conduzido por um **agente de IA (opencode)** seguindo um f
 - **Documentação por feature** — cada feature tem um doc em `docs/features/` com critérios, provas mecânicas e decisões.
 
 O fluxo completo do pipeline: **especificar → testar → implementar → documentar → revisar → aprovar → commitar**, sempre com gates mecânicos e aprovação explícita do usuário antes de qualquer commit.
+
+---
+
+## Specs — o fluxo de desenvolvimento
+
+Este projeto é desenvolvido com o fluxo **spec-anchored** do meus specs — um sistema próprio de **spec-driven design com prova mecânica**: a spec e o código evoluem juntos porque um **gate mecânico** (exit code, não frase) força o alinhamento o tempo todo. O "pronto" é veredito da máquina: **cada critério de aceite tem um teste que passou, ou a feature não está pronta**.
+
+> Repositório do projeto: <https://github.com/PedronXW/spec>
+
+O fluxo funciona via comandos `/specs*` no opencode, que orquestram o pipeline:
+
+- **`/specs-spec`** — a feature é especificada em `.spec/features/F-###/spec.md` (histórias `U-###`, critérios `AC-###`), com suposições e perguntas em aberto que precisam ser resolvidas antes de seguir;
+- **`/specs-plan`, `/specs-run`, `/specs-redo`** — o plano é desenhado (tarefas disjuntas podem rodar em **paralelo**, cada uma em worktree/branch própria, 1 tarefa = 1 commit rastreável) e executado;
+- **`/specs-audit`** — auditoria mecânica: cada AC aponta o teste que o prova (`criteria.reg` + `trace.tsv`) e o veredito é dado por **exit code**;
+- **`/specs-status`, `/specs-review`, `/specs-resolve`** — acompanhamento, aprovação e fechamento de suposições/perguntas;
+- **`/specs-lesson`, `/specs-constitution`** — lições com lastro em falha real e verificação executável da constituição do projeto (preset LGPD/educação).
+
+Neste repo, as specs vivem em `.spec/`:
+
+```
+.spec/
+  constitution.md              # constituição + verificações executáveis
+  lessons.md                   # lições com lastro em falhas reais
+  features/F-001..F-038/       # spec legível + critérios + plano + prova (um por feature)
+    spec.md                    # histórias, critérios de aceite, suposições
+    criteria.reg               # máquina: AC-id → story → descrição → dono T-id
+    trace.tsv                  # máquina: AC-id → comando de teste → sha
+    state.tsv                  # máquina: T-id → status → branch → sha
+```
+
+Todos os critérios das 38 features deste projeto são provados mecanicamente (475 testes), e nenhuma feature fecha com suposição/pergunta em aberto — o fluxo **bloqueia** avanço se a fase anterior não estiver `done`.
+
+| Garantia | Como |
+|---|---|
+| Rastreabilidade de ponta a ponta | cada história, critério e tarefa tem código; cada AC aponta o teste que o prova |
+| "Pronto" é veredito da máquina | `specs proof`/`specs gate` decidem por exit code; teste pulado não conta |
+| Suposições/perguntas obrigatórias | registradas com status; bloqueiam o fechamento da feature |
+| Execução paralela planejada | tarefas de arquivos disjuntos em worktrees/branches próprios |
+| Escrita concorrente segura | travas (`flock`/mkdir atômico) em `prove`/`state`/`integrate`/`resolve` |
+| Zero dependências | só bash + git; formato mecânico em TSV estruturado |
 
 ---
 
