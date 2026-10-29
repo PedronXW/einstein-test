@@ -14,38 +14,51 @@ class Storage(Protocol):
 
 
 class MinioStorage:
-    """Upload via boto3 contra o MinIO local (config do compose F-001)."""
+    """Upload via boto3 contra S3/MinIO (config de ambiente, compatível com AWS).
+
+    No ambiente local (compose) usa ``MINIO_ENDPOINT``/``MINIO_ROOT_USER``/
+    ``MINIO_ROOT_PASSWORD``. Na AWS, sem essas variáveis, o boto3 cai no
+    provider chain (task role do ECS / IMDS) — sem credenciais em texto.
+    """
 
     bucket = BUCKET
 
     def __init__(
         self,
+        bucket: str | None = None,
         endpoint: str | None = None,
         access_key: str | None = None,
         secret_key: str | None = None,
     ) -> None:
         import boto3
 
-        self._s3 = boto3.client(
-            "s3",
-            endpoint_url=endpoint or os.getenv(
-                "MINIO_ENDPOINT", "http://localhost:9000"
-            ),
-            aws_access_key_id=access_key or os.getenv(
-                "MINIO_ROOT_USER", "minioadmin"
-            ),
-            aws_secret_access_key=secret_key or os.getenv(
-                "MINIO_ROOT_PASSWORD", "minioadmin"
-            ),
-            region_name="us-east-1",
+        self.bucket = bucket or os.getenv("S3_BUCKET") or BUCKET
+        endpoint = endpoint or os.getenv("S3_ENDPOINT_URL") or os.getenv(
+            "MINIO_ENDPOINT", "http://localhost:9000"
         )
+        access_key = access_key or os.getenv(
+            "AWS_ACCESS_KEY_ID"
+        ) or os.getenv("MINIO_ROOT_USER")
+        secret_key = secret_key or os.getenv(
+            "AWS_SECRET_ACCESS_KEY"
+        ) or os.getenv("MINIO_ROOT_PASSWORD")
+
+        kwargs: dict[str, str] = {}
+        if endpoint:
+            kwargs["endpoint_url"] = endpoint
+        if access_key:
+            kwargs["aws_access_key_id"] = access_key
+        if secret_key:
+            kwargs["aws_secret_access_key"] = secret_key
+
+        self._s3 = boto3.client("s3", region_name="us-east-1", **kwargs)
 
     def ensure_bucket(self, name: str | None = None) -> None:
         """Garante que o bucket existe — cria se não existir (idempotente).
 
-        Tolerante ao boot: se o MinIO estiver indisponível ou outro processo
-        criar o bucket na mesma corrida (409/BucketAlreadyOwnedByYou), registra
-        e segue em vez de impedir o boot da app.
+        Tolerante ao boot: se o MinIO/S3 estiver indisponível ou outro
+        processo criar o bucket na mesma corrida (409/BucketAlreadyOwnedByYou),
+        registra e segue em vez de impedir o boot da app.
         """
         from botocore.exceptions import ClientError
 

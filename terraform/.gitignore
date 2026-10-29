@@ -1,0 +1,12 @@
+# Estado/planos gerados localmente
+*.tfstate
+*.tfstate.*
+.crash.log
+*.tfplan
+
+# Diretório de plugins/provider do terraform
+.terraform/
+
+# tfvars especificamente locais (segredos), ex.: TF_VAR_openai_api_key
+# Nota: prod.tfvars é versionado; coloque chaves via TF_VAR ou em local.auto.tfvars
+*local.auto.tfvars
