@@ -505,7 +505,6 @@ Cada feature (F-001..F-038) tem documentação própria em [`docs/features/`](do
 
 A aplicação também roda em **produção** na AWS (infra gerenciada por Terraform em `terraform/`):
 
-- **API:** <http://einstein-prod-alb-1485984983.us-east-1.elb.amazonaws.com>
 - **Deploy manual:** GitHub Actions → workflow **Deploy** → *Run workflow* (branch `main`, environment `prod`)
 - Stack: ECS Fargate (api + worker), RDS PostgreSQL 15.19, ElastiCache Redis 7, S3, ALB, Secrets Manager, CloudWatch.
 
